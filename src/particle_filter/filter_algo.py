@@ -1,42 +1,47 @@
-from typing import Tuple
-
-from jax.typing import ArrayLike
-from jax import Array
-from tqdm import tqdm
 import os
+from typing import Any, Dict, Tuple
 
+from jax import Array
+from jax.typing import ArrayLike
+from tqdm import tqdm
+
+import paths
 from src.particle_filter.global_settings import GlobalSettings
+from src.particle_filter.logger import get_logger
 from src.particle_filter.observation_data import ObservationData
 from src.particle_filter.output_handler import OutputHandler
 from src.particle_filter.particle_cloud import ParticleCloud
 from src.particle_filter.transition import OUModel
-from src.particle_filter.logger import get_logger
-import paths
 
 
 class ParticleFilterAlgo:
-    def __init__(self, settings: GlobalSettings) -> None:
+    def __init__(self, settings: GlobalSettings, logger) -> None:
         self.settings = settings
         self.likelihoods = []
+        self.logger = logger
 
-    def run(self, observation_data: ArrayLike) -> Tuple[Array, float]:
+    def run(
+        self, observation_data: ArrayLike, theta: Dict[str, Any]
+    ) -> Tuple[Array, Array, Array, Array]:
         """Main logic for running the particle filter.
 
         Args:
             observation_data: Reported daily hospitalization cases.
                 Must be an array of length runtime.
+            theta: dictionary {param_name: value} containing parameters proposed
+                by the MCMC algorithm.
 
         Returns:
 
         """
         config_path = os.path.join(paths.PF_DIR, "config.toml")
         logger = get_logger()
-        self.log_config_file(config_path)
 
         particles = ParticleCloud(
             settings=self.settings,
             transition=OUModel(config_file=config_path),
-            logger=logger,
+            logger=self.logger,
+            theta=theta,
         )
 
         # Initialize an object that stores the hospitalization data.
@@ -50,8 +55,8 @@ class ParticleFilterAlgo:
         for t in tqdm(
             range(self.settings.runtime), desc="Running Particle Filter", colour="green"
         ):
-            # If t = 0, then we just initialized the particles. Thus, no update.
             if t != 0:
+                # If t = 0, then we just initialized the particles. Thus, no update.
                 particles.update_all_particles(t)
 
             case_report = observed_data.get_observation(t)
@@ -61,18 +66,9 @@ class ParticleFilterAlgo:
             particles.resample(t=t)
             particles.perturb_beta(t=t)
 
-        # output_handler = OutputHandler(self.settings, self.settings.runtime)
-        # output_handler.output_average_betas(all_betas=particles.betas)
-        return (particles.likelihoods, particles.hosp_estimates, particles.states)
-
-    def log_config_file(self, config_file_path):
-        """Logs the contents of the config.toml file."""
-        logger = get_logger()
-
-        # Read the configuration file
-        with open(config_file_path, "r") as file:
-            config_contents = file.read()
-
-        # Log the contents of the configuration file
-        logger.info("Logging configuration file contents:")
-        logger.info(config_contents)
+        return (
+            particles.likelihoods,
+            particles.hosp_estimates,
+            particles.states,
+            particles.betas,
+        )

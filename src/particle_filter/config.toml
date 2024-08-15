@@ -1,7 +1,7 @@
 # config.toml
 
-[mcmc_params]
-num_iterations = 1000
+[mcmc]
+iterations = 1000
 # initial_theta overrides other parameters.
 # if a parameter is set here, then it will
 # be estimated by MCMC. The value set here

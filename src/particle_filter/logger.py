@@ -3,8 +3,9 @@ import os
 from datetime import datetime
 
 import pytz
-import paths
 import toml
+
+import paths
 
 
 def get_logger():

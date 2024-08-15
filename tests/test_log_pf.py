@@ -3,9 +3,9 @@ import unittest
 from unittest.mock import patch
 
 import jax.numpy as jnp
-from jax import random
 import numpy as np
 import pandas as pd
+from jax import random
 
 import src.particle_filter.observation_data
 import src.particle_filter.particle_cloud

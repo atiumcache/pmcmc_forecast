@@ -1,13 +1,23 @@
+from typing import Callable, Dict, Tuple, Any
+
 import jax.numpy as jnp
+import jax.random as random
+from jax import Array
 from jax.numpy.linalg import cholesky
 from jax.typing import ArrayLike
-from typing import Callable
-import jax.random as random
-from typing import Dict
+
+from src.particle_filter.initialize_filter import initialize_particle_filter
+from src.particle_filter.logger import get_logger
 
 
 class PMCMC:
-    def __init__(self, iterations: int, init_theta: Dict, prior: Callable) -> None:
+    def __init__(
+        self,
+        iterations: int,
+        init_theta: Dict,
+        prior: Callable,
+        location_info: Dict[str, Any],
+    ) -> None:
         """Initializes a Particle MCMC algorithm.
 
         Args:
@@ -20,6 +30,7 @@ class PMCMC:
         self._iterations = iterations
         self._prior = prior
         self._key = random.PRNGKey(47)
+        self.location_settings = {}
 
         self._mle_betas = None
         self._mle_hospitalizations = None
@@ -38,7 +49,7 @@ class PMCMC:
 
         self.theta_dictionary_template = init_theta
 
-        if jnp.isfinite(self.likelihoods[0]):
+        if jnp.isfinite(self._likelihoods[0]):
             # TODO: insert filter logic here
             pass
 
@@ -58,7 +69,6 @@ class PMCMC:
             proposal_likelihood = self._prior(theta_prop)
 
             if jnp.isfinite(proposal_likelihood):
-                theta_dict = self.convert_theta_to_dict(theta_prop)
 
                 # TODO: Implement filter logic
                 # TODO: Filter needs to output likelihood, amongst other variables/arrays
@@ -83,7 +93,21 @@ class PMCMC:
 
             self.update_cov(i)
 
-    def convert_theta_to_dict(self, theta: ArrayLike) -> Dict[str, float]:
+    def run_filter(
+        self, theta_proposal: ArrayLike
+    ) -> Tuple[Array, Array, Array, Array]:
+        """
+
+        """
+        theta_dict = self._convert_theta_to_dict(theta_proposal)
+        pf_algo = initialize_particle_filter(
+            state_population=self.location_settings['population'],
+            location_code=self.location_settings['location_code'],
+            target_date=self.location_settings['target_date'],
+            runtime=self.location_settings['runtime']
+        )
+
+    def _convert_theta_to_dict(self, theta: ArrayLike) -> Dict[str, float]:
         """
         Converts a theta vector into a dictionary.
         The dictionary can be parsed by the PF.
@@ -99,7 +123,9 @@ class PMCMC:
             new_theta_dict[key] = theta[index].item()
         return new_theta_dict
 
-    def accept_reject(self, theta_prop: ArrayLike, new_likelihood: float, iteration: int) -> None:
+    def accept_reject(
+        self, theta_prop: ArrayLike, new_likelihood: float, iteration: int
+    ) -> None:
         """
         Metropolis-Hastings algorithm to determine if the proposed theta
         is accepted or rejected.
@@ -112,7 +138,9 @@ class PMCMC:
         Returns:
             None: This method modifies instance attributes in place.
         """
-        acceptance_probability = min(1, new_likelihood - self._likelihoods[iteration - 1])
+        acceptance_probability = min(
+            1, new_likelihood - self._likelihoods[iteration - 1]
+        )
         self._key, subkey = random.split(self._key)
         u = random.uniform(key=subkey, minval=0, maxval=1).item()
         if jnp.log(u) < acceptance_probability:
@@ -120,7 +148,9 @@ class PMCMC:
         else:
             self.reject_proposal(iteration)
 
-    def accept_proposal(self, theta_prop: ArrayLike, new_likelihood: float, iteration: int) -> None:
+    def accept_proposal(
+        self, theta_prop: ArrayLike, new_likelihood: float, iteration: int
+    ) -> None:
         """
         Implements the logic for an accepted proposal.
 
@@ -180,3 +210,15 @@ class PMCMC:
         Get the state vectors at each time step from the maximum likelihood run of the particle filter.
         """
         return self._mle_states
+
+    def log_config_file(self, config_file_path):
+        """Logs the contents of the config.toml file."""
+        logger = get_logger()
+
+        # Read the configuration file
+        with open(config_file_path, "r") as file:
+            config_contents = file.read()
+
+        # Log the contents of the configuration file
+        logger.info("Logging configuration file contents:")
+        logger.info(config_contents)

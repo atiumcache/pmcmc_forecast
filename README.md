@@ -1,7 +1,6 @@
 # Particle Filter --- Forecasting Hospitalizations
-The goal of this project is to predict new flu cases using a particle 
-filter and trend forecasting. We model the state of our system using a SIRH 
-model, and infer the transmission rate using a particle filter.
+The goal of this project is to predict new flu cases using PMCMC (Partilce Markov Chain Monte Carlo) and trend forecasting. We model the state of our system using a SIRH 
+model, and infer the transmission rate using PMCMC.
 
 This repository implements an automated pipeline to:
 - Collect new hospitalization data.

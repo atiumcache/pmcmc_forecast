@@ -1,19 +1,19 @@
 from dataclasses import dataclass
-from typing import Dict, Any
+from logging import Logger
+from typing import Any, Dict
 
 import jax
 import numpy as np
 from jax import Array, float0
 from jax import numpy as jnp
-from jax import random as random
 from jax import random
+from jax import random as random
 from jax.scipy.stats import nbinom as nbinom
 from jax.scipy.stats import norm as normal
 from jax.typing import ArrayLike
 
 from src.particle_filter.global_settings import GlobalSettings
 from src.particle_filter.transition import Transition
-
 
 KeyArray = Array
 
@@ -40,7 +40,11 @@ class ParticleCloud:
     """
 
     def __init__(
-        self, settings: GlobalSettings, transition: Transition, logger, theta: Dict[str, Any]
+        self,
+        settings: GlobalSettings,
+        transition: Transition,
+        logger: Logger,
+        theta: Dict[str, Any],
     ) -> None:
         self.settings = settings
         self.model = transition
@@ -51,7 +55,7 @@ class ParticleCloud:
         seed = 43
         self.key = random.PRNGKey(seed)
 
-        self.set_initial_states()
+        self.states = self.set_initial_states()
 
         self.weights = jnp.zeros((self.settings.num_particles, self.settings.runtime))
         self.hosp_estimates = jnp.zeros(
@@ -65,8 +69,9 @@ class ParticleCloud:
             )
         )
         self.likelihoods = jnp.zeros(self.settings.runtime)
+        self.betas = jnp.zeros((self.settings.num_particles, self.settings.runtime))
 
-    def set_initial_states(self) -> None:
+    def set_initial_states(self) -> Array:
         """
         Sets the initial states of the particles,
         according to priors given in `config.toml`.
@@ -79,14 +84,15 @@ class ParticleCloud:
         initial_states = jnp.array(
             [self._get_initial_state(k) for k in initial_state_keys]
         )
-        self.states = jnp.zeros(
+        states = jnp.zeros(
             (
                 self.settings.num_particles,
                 initial_states.shape[-1],
                 self.settings.runtime,
             )
         )
-        self.states = self.states.at[:, :, 0].set(initial_states)
+        states = states.at[:, :, 0].set(initial_states)
+        return states
 
     def _apply_mcmc_params(self, theta: Dict[str, Any]):
         """
@@ -100,14 +106,16 @@ class ParticleCloud:
             None: Instance parameters are updated directly.
         """
         for key, value in theta.items():
-            if hasattr(self.model.params, 'update_param'):
+            if hasattr(self.model.params, "update_param"):
                 try:
                     self.model.params.update_param(key, value)
                 except AttributeError:
                     if key in self.settings.__dict__.keys():
                         setattr(self.settings, key, value)
                     else:
-                        raise ValueError(f"Initial_theta has an unrecognized parameter: {key}.")
+                        raise ValueError(
+                            f"Initial_theta has an unrecognized parameter: {key}."
+                        )
             else:
                 raise ValueError(f"Model does not support parameter updates.")
 
@@ -372,6 +380,7 @@ class ParticleCloud:
         )
         betas += perturbations * 0.005
         self.states = self.states.at[:, 5, t].set(betas)
+        self.betas = self.betas.at[:, t].set(betas)
 
 
 def jacobian(input_array: ArrayLike) -> Array:

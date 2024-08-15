@@ -1,9 +1,11 @@
-from src.particle_filter.global_settings import GlobalSettings
-from src.particle_filter.parameters import ModelParameters
-from src.particle_filter.main_particle_filter import ParticleFilterAlgo
-import toml
-import paths
 import os
+
+import toml
+
+import paths
+from src.particle_filter.global_settings import GlobalSettings
+from src.particle_filter.filter_algo import ParticleFilterAlgo
+from src.particle_filter.parameters import ModelParameters
 
 
 def initialize_particle_filter(

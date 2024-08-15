@@ -6,6 +6,7 @@ from jax.typing import ArrayLike
 @dataclass
 class ObservationData:
     """Stores the observed/reported data (Hospitalization case counts)."""
+
     observations: ArrayLike
 
     def get_observation(self, t: int) -> int:

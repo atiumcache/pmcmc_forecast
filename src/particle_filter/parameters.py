@@ -1,7 +1,8 @@
+from typing import Any, Dict, Optional, Union
+
 import jax.numpy as jnp
 import jax.random as random
 import toml
-from typing import Union, Optional, Dict, Any
 from scipy.stats import norm
 
 
@@ -73,4 +74,3 @@ class ModelParameters:
             self._params[key].value = value
         else:
             raise AttributeError(f"Parameter {key} does not exist.")
-
