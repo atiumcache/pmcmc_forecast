@@ -14,6 +14,8 @@ from src.particle_filter.particle_cloud import ParticleCloud
 from src.particle_filter.transition import OUModel
 from logging import Logger
 
+from jax import random
+
 
 @dataclass
 class PFOutput:
@@ -28,6 +30,7 @@ class ParticleFilterAlgo:
         self.settings = settings
         self.likelihoods = []
         self.logger = logger
+        self.key = random.PRNGKey(47)
 
     def run(self, observation_data: ArrayLike, theta: Dict[str, Any]) -> PFOutput:
         """Main logic for running the particle filter.
@@ -61,11 +64,12 @@ class ParticleFilterAlgo:
         for t in tqdm(
             range(self.settings.runtime), desc="Running Particle Filter", colour="green", leave=False
         ):
+            self.key, *subkeys = random.split(self.key)
             if t != 0:
                 # If t = 0, then we just initialized the particles. Thus, no update.
-                particles.update_all_particles(t)
+                particles.update_all_particles(t=t)
 
-            case_report = observed_data.get_observation(t)
+            case_report = observed_data.get_observation(t=t)
 
             particles.compute_all_weights(reported_data=case_report, t=t)
             particles.normalize_weights(t=t)

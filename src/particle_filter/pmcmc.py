@@ -108,6 +108,8 @@ class PMCMC:
             # TODO: Implement covariance update
             # self.update_cov(i)
 
+            # TODO: Check for convergence (using r-hat or something else); terminate the algo if we have converged.
+
     def generate_theta_proposal(self, previous_theta):
         """
         Generate a proposal for the next iteration of the Markov Chain.
