@@ -1,28 +1,35 @@
 import os
+from dataclasses import dataclass
 from typing import Any, Dict, Tuple
 
 from jax import Array
 from jax.typing import ArrayLike
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 
 import paths
 from src.particle_filter.global_settings import GlobalSettings
-from src.particle_filter.logger import get_logger
 from src.particle_filter.observation_data import ObservationData
 from src.particle_filter.output_handler import OutputHandler
 from src.particle_filter.particle_cloud import ParticleCloud
 from src.particle_filter.transition import OUModel
+from logging import Logger
+
+
+@dataclass
+class PFOutput:
+    states: ArrayLike
+    likelihood: ArrayLike
+    hosp_estimates: ArrayLike
+    betas: ArrayLike
 
 
 class ParticleFilterAlgo:
-    def __init__(self, settings: GlobalSettings, logger) -> None:
+    def __init__(self, settings: GlobalSettings, logger: Logger) -> None:
         self.settings = settings
         self.likelihoods = []
         self.logger = logger
 
-    def run(
-        self, observation_data: ArrayLike, theta: Dict[str, Any]
-    ) -> Tuple[Array, Array, Array, Array]:
+    def run(self, observation_data: ArrayLike, theta: Dict[str, Any]) -> PFOutput:
         """Main logic for running the particle filter.
 
         Args:
@@ -32,10 +39,9 @@ class ParticleFilterAlgo:
                 by the MCMC algorithm.
 
         Returns:
-
+            PFOutput object. Contains attributes of interest for use in MCMC wrapper.
         """
         config_path = os.path.join(paths.PF_DIR, "config.toml")
-        logger = get_logger()
 
         particles = ParticleCloud(
             settings=self.settings,
@@ -53,7 +59,7 @@ class ParticleFilterAlgo:
 
         # tqdm provides the console progress bar.
         for t in tqdm(
-            range(self.settings.runtime), desc="Running Particle Filter", colour="green"
+            range(self.settings.runtime), desc="Running Particle Filter", colour="green", leave=False
         ):
             if t != 0:
                 # If t = 0, then we just initialized the particles. Thus, no update.
@@ -66,9 +72,11 @@ class ParticleFilterAlgo:
             particles.resample(t=t)
             particles.perturb_beta(t=t)
 
-        return (
-            particles.likelihoods,
-            particles.hosp_estimates,
-            particles.states,
-            particles.betas,
+        output_object = PFOutput(
+            states=particles.states,
+            likelihood=particles.likelihoods,
+            hosp_estimates=particles.hosp_estimates,
+            betas=particles.betas,
         )
+
+        return output_object

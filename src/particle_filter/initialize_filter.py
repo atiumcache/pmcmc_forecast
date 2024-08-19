@@ -1,11 +1,12 @@
+from logging import Logger
+
 import os
 
 import toml
 
 import paths
-from src.particle_filter.global_settings import GlobalSettings
 from src.particle_filter.filter_algo import ParticleFilterAlgo
-from src.particle_filter.parameters import ModelParameters
+from src.particle_filter.global_settings import GlobalSettings
 
 
 def initialize_particle_filter(
@@ -13,6 +14,7 @@ def initialize_particle_filter(
     location_code: str,
     target_date: str,
     runtime: int,
+    logger: Logger,
 ) -> ParticleFilterAlgo:
     """Initializes a ParticleFilterAlgo object."""
 
@@ -27,9 +29,10 @@ def initialize_particle_filter(
         dt=config["filter_params"]["dt"],
         beta_prior=tuple(config["filter_params"]["beta_prior"]),
         seed_size=config["filter_params"]["seed_size"],
+        dispersion=config["filter_params"]["dispersion"]
     )
 
-    pf_algo = ParticleFilterAlgo(settings=global_settings)
+    pf_algo = ParticleFilterAlgo(settings=global_settings, logger=logger)
     return pf_algo
 
 

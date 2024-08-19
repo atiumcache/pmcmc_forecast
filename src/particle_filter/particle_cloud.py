@@ -263,13 +263,7 @@ class ParticleCloud:
             )
         elif dist == "nbinom":
             epsilon = 0.005
-            sigma2 = std_dev**2
-            if sigma2 <= particle_estimate:
-                # If this case, then r will be negative.
-                # So, we set to some positive constant.
-                r = 1
-            else:
-                r = (particle_estimate**2) / (sigma2 - particle_estimate)
+            r = self.settings.dispersion
             weight = nbinom.logpmf(
                 k=reported_data,
                 n=r,

@@ -15,4 +15,4 @@ class ObservationData:
         An observation is the new hospitalizations case count
         on day t.
         """
-        return self.observations[t].item()
+        return self.observations[t]
