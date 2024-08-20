@@ -1,6 +1,6 @@
 # Particle Filter --- Forecasting Hospitalizations
-The goal of this project is to predict new flu cases using PMCMC (Partilce Markov Chain Monte Carlo) and trend forecasting. We model the state of our system using a SIRH 
-model, and infer the transmission rate using PMCMC.
+The goal of this project is to predict new flu cases using PMCMC (Particle Markov Chain Monte Carlo) and trend forecasting. We model the state of our system using an SIRH 
+model, and we infer the transmission rate using PMCMC.
 
 This repository implements an automated pipeline to:
 - Collect new hospitalization data.
@@ -9,20 +9,19 @@ This repository implements an automated pipeline to:
 - Use the forecasted transmission rates to predict future hospitalizations. 
 
 We utilize a bash script (`./job_script.sh`) to automate and parallelize 
-most of this process on a HPC cluster. 
+most of this process on an HPC cluster. 
 
 ### Collect New Hospitalization Data
 Download the new hospitalization reports and split the data into 
-state-level data using the `filter_forecast.process_new_data` script.
+state-level data using the `src/process_new_data.py` script.
 
 ### Run the Particle Filter
 For each location, we run the particle filter on the state-level data. This outputs an inferred transmission rate `β`. 
-The particle filter is implemented in the `filter_forecast.particle_filter` package.  
+The particle filter is implemented in the `src.particle_filter` package. 
 
 ### Forecasting
 The `./r_scripts/beta_trend_forecast.R` script uses changepoint detection and 
-trend 
-forecasting to predict the transmission rate `β` for 28 days into the future.
+trend forecasting to predict the transmission rate `β` for 28 days into the future.
 
 Then, `filter_forecast.hosp_forecast` uses the predicted `β` to forecast hospitalization rates 28 days into the future.
 
