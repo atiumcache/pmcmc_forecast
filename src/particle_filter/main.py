@@ -8,16 +8,13 @@ by the Trend Forecasting R script.
 
 from os import path
 
-import jax.numpy as jnp
 import pandas as pd
 import toml
 from jax import Array
-from jax.typing import ArrayLike
 
 import paths
-from src.helpers import get_data_since_week_26
-from src.location import Location
-from src.particle_filter.initialize_filter import initialize_particle_filter
+from src.particle_filter.helpers import get_data_since_week_26
+from src.particle_filter.location import Location
 from src.particle_filter.pmcmc import PMCMC
 from src.particle_filter.prior import UniformPrior
 

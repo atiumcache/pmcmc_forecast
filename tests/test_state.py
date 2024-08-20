@@ -1,8 +1,6 @@
 import unittest
 
-import pandas as pd
-
-from src.location import Location
+from src.particle_filter.location import Location
 
 
 class TestState(unittest.TestCase):
