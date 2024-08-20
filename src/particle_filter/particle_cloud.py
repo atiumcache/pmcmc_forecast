@@ -1,18 +1,19 @@
 from dataclasses import dataclass
+from logging import Logger
+from typing import Any, Dict
 
 import jax
 import numpy as np
 from jax import Array, float0
 from jax import numpy as jnp
-from jax import random as random
 from jax import random
+from jax import random as random
 from jax.scipy.stats import nbinom as nbinom
 from jax.scipy.stats import norm as normal
 from jax.typing import ArrayLike
 
 from src.particle_filter.global_settings import GlobalSettings
 from src.particle_filter.transition import Transition
-
 
 KeyArray = Array
 
@@ -39,16 +40,22 @@ class ParticleCloud:
     """
 
     def __init__(
-        self, settings: GlobalSettings, transition: Transition, logger
+        self,
+        settings: GlobalSettings,
+        transition: Transition,
+        logger: Logger,
+        theta: Dict[str, Any],
     ) -> None:
         self.settings = settings
         self.model = transition
         self.logger = logger
 
+        self._apply_mcmc_params(theta=theta)
+
         seed = 43
         self.key = random.PRNGKey(seed)
 
-        self.set_initial_states()
+        self.states = self.set_initial_states()
 
         self.weights = jnp.zeros((self.settings.num_particles, self.settings.runtime))
         self.hosp_estimates = jnp.zeros(
@@ -61,8 +68,10 @@ class ParticleCloud:
                 self.settings.runtime,
             )
         )
+        self.likelihoods = jnp.zeros(self.settings.runtime)
+        self.betas = jnp.zeros((self.settings.num_particles, self.settings.runtime))
 
-    def set_initial_states(self) -> None:
+    def set_initial_states(self) -> Array:
         """
         Sets the initial states of the particles,
         according to priors given in `config.toml`.
@@ -75,17 +84,44 @@ class ParticleCloud:
         initial_states = jnp.array(
             [self._get_initial_state(k) for k in initial_state_keys]
         )
-        self.states = jnp.zeros(
+        states = jnp.zeros(
             (
                 self.settings.num_particles,
                 initial_states.shape[-1],
                 self.settings.runtime,
             )
         )
-        self.states = self.states.at[:, :, 0].set(initial_states)
+        states = states.at[:, :, 0].set(initial_states)
+        return states
+
+    def _apply_mcmc_params(self, theta: Dict[str, Any]):
+        """
+        Overrides default params with MCMC proposals.
+
+        Args:
+            theta: a dictionary {param_name: value}, passed
+                into the PF from MCMC.
+
+        Returns:
+            None: Instance parameters are updated directly.
+        """
+        for key, value in theta.items():
+            if hasattr(self.model.params, "update_param"):
+                try:
+                    self.model.params.update_param(key, value)
+                except AttributeError:
+                    if key in self.settings.__dict__.keys():
+                        setattr(self.settings, key, value)
+                    else:
+                        raise ValueError(
+                            f"Initial_theta has an unrecognized parameter: {key}."
+                        )
+            else:
+                raise ValueError(f"Model does not support parameter updates.")
 
     def _get_initial_state(self, key: KeyArray) -> Array:
-        """Gets an initial state for one particle.
+        """
+        Gets an initial state for one particle.
 
         The entire population is susceptible. Then, we draw from uniform
         random to infect some portion of the susceptible population.
@@ -119,7 +155,8 @@ class ParticleCloud:
         return jnp.array(state)
 
     def enforce_population_constraint(self, state) -> Array:
-        """Scales each compartment (S,I,R,H) to ensure that
+        """
+        Scales each compartment (S,I,R,H) to ensure that
         the compartments sum to N, the total population.
 
         This is necessary because the stochastic system causes the sum of
@@ -145,7 +182,8 @@ class ParticleCloud:
         return jnp.array([S, I, R, H, new_H, beta])
 
     def _update_single_particle(self, state: ArrayLike, t: int) -> Array:
-        """For a single particle, step the state forward 1 discrete time step.
+        """
+        For a single particle, step the state forward 1 discrete time step.
 
         Helper function for update_all_particles. Each particle's update is
         performed separately to accommodate for individual gradient/sensitivity
@@ -168,7 +206,8 @@ class ParticleCloud:
         return state
 
     def update_betas(self, t: int) -> None:
-        """Updates the beta parameter of each particle at time t.
+        """
+        Updates the beta parameter of each particle at time t.
 
         Args:
             t: current time step
@@ -192,7 +231,7 @@ class ParticleCloud:
             t: current time step
 
         Returns:
-            None. We update the instance states directly.
+            None. This method updates the instance attributes directly.
         """
         self.update_betas(t)
 
@@ -205,53 +244,56 @@ class ParticleCloud:
         new_hosp_estimates = self.states[:, 4, t] - self.states[:, 4, t - 1]
         self.hosp_estimates = self.hosp_estimates.at[:, t].set(new_hosp_estimates)
 
+    @staticmethod
+    @jax.jit
     def _compute_single_weight(
-        self,
-        reported_data: int,
-        particle_estimate: float | int,
-        std_dev: float,
-        dist: str,
-    ) -> float:
-        """Computes the un-normalized weight of a single particle.
+        reported_data: int, particle_estimate: float | ArrayLike, r: float | int
+    ) -> Array:
+        """
+        Computes the un-normalized weight of a single particle.
         Helper function for compute_all_weights.
 
         Args:
-            reported_data: Reported new hospitalization case counts at
-                current time step.
+            reported_data: Reported new hospitalization case counts at current time step.
+            particle_estimate: Reported new hospitalization case counts at current time step.
+            r: dispersion parameter for nbinom likelihood.
 
         Returns:
-            An un-normalized weight for a single particle.
+            A 1-element JAX array, containing an un-normalized weight for a single particle.
         """
-        if dist == "normal":
-            weight = normal.logpdf(
-                x=reported_data, loc=particle_estimate, scale=std_dev
-            )
-        elif dist == "nbinom":
-            epsilon = 0.005
-            sigma2 = std_dev**2
-            if sigma2 <= particle_estimate:
-                # If this case, then r will be negative.
-                # So, we set to some positive constant.
-                r = 1
-            else:
-                r = (particle_estimate**2) / (sigma2 - particle_estimate)
-            weight = nbinom.logpmf(
-                k=reported_data,
-                n=r,
-                p=r / (r + particle_estimate + epsilon),
-            )
-        else:
-            raise ValueError(
-                f'Unrecognized dist: {dist}. Options are "normal", "nbinom"'
-            )
-        return weight.item()
+        epsilon = 0.005
+        weight = nbinom.logpmf(
+            k=reported_data,
+            n=r,
+            p=r / (r + particle_estimate + epsilon),
+        )
+        return weight
 
     def compute_all_weights(self, reported_data: int | float, t: int) -> None:
-        """Update the weights for every particle.
+        """
+        Update the weights for every particle. Saves the Monte Carlo
+        likelihood estimate for the weights.
 
         Args:
-            reported_data: Reported new hospitalization case counts at
-                current time step.
+            reported_data: Reported new hospitalization case counts at time t.
+            t: current time step.
+
+        Returns:
+            None. Updates the instance weights directly.
+        """
+        new_weights = jax.vmap(self._compute_single_weight, in_axes=(None, 0, None))(
+            reported_data, self.hosp_estimates[:, t], self.settings.dispersion
+        )
+        self.weights = self.weights.at[:, t].set(new_weights)
+        self.save_likelihood(new_weights, t)
+
+    def compute_all_weights_loop(self, reported_data: int | float, t: int) -> None:
+        """
+        Update the weights for every particle. Saves the Monte Carlo
+        likelihood estimate for the weights.
+
+        Args:
+            reported_data: Reported new hospitalization case counts at time t.
             t: current time step.
 
         Returns:
@@ -259,16 +301,29 @@ class ParticleCloud:
         """
         new_weights = jnp.zeros(self.settings.num_particles)
 
-        avg_hosp_estimate = sum(self.hosp_estimates[:, t]) / self.settings.num_particles
-        std_dev = max(avg_hosp_estimate / 20, 0.1)
-
         for p in range(self.settings.num_particles):
             hosp_estimate = self.hosp_estimates[p, t]
             new_weight = self._compute_single_weight(
-                reported_data, float(hosp_estimate), std_dev, "nbinom"
+                reported_data=reported_data,
+                particle_estimate=hosp_estimate,
+                r=self.settings.dispersion,
             )
             new_weights = new_weights.at[p].set(new_weight)
         self.weights = self.weights.at[:, t].set(new_weights)
+        self.save_likelihood(new_weights, t)
+
+    def save_likelihood(self, weights: jnp.ndarray, t: int) -> None:
+        """Saves the Monte Carlo estimate of the likelihood at time t.
+
+        Args:
+            weights: the particle weights at current time step.
+            t: current time step.
+
+        Returns:
+            None: This method updates the instance likelihoods directly.
+        """
+        likelihood = jacobian(weights)[-1] - jnp.log(self.settings.num_particles)
+        self.likelihoods = self.likelihoods.at[t].set(likelihood)
 
     def normalize_weights(self, t: int) -> None:
         """Normalize the weights using the Jacobian algorithm.
@@ -329,6 +384,7 @@ class ParticleCloud:
         )
         betas += perturbations * 0.005
         self.states = self.states.at[:, 5, t].set(betas)
+        self.betas = self.betas.at[:, t].set(betas)
 
 
 def jacobian(input_array: ArrayLike) -> Array:

@@ -105,7 +105,7 @@ class OUModel(Transition):
             key: A PRNGKey for random number generation.
 
         Returns:
-            A NDArray of stochastic increments.
+            A stochastic increment for beta.
         """
         dW = random.normal(key, shape=())  # single Wiener process for beta
         d_beta = self.params.beta_sigma * jnp.sqrt(dt) * dW

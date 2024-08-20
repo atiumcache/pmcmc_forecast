@@ -24,8 +24,7 @@ class GlobalSettings:
     location_code: str
     final_date: str
     runtime: int
-    likelihood_r: float = field(default_factory=lambda: 10)
-    likelihood_p: float = field(default_factory=lambda: 0.3)
+    dispersion: float
     dt: float = field(default_factory=lambda: 1.0)
     beta_prior: Tuple[float, float] = field(default_factory=lambda: (0.10, 0.25))
     seed_size: float = field(default_factory=lambda: 0.005)

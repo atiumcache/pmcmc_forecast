@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from jax._src.basearray import ArrayLike
+from jax.typing import ArrayLike
 
 
 @dataclass
