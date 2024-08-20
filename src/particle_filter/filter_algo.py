@@ -62,7 +62,10 @@ class ParticleFilterAlgo:
 
         # tqdm provides the console progress bar.
         for t in tqdm(
-            range(self.settings.runtime), desc="Running Particle Filter", colour="green", leave=False
+            range(self.settings.runtime),
+            desc="Running Particle Filter",
+            colour="green",
+            leave=False,
         ):
             self.key, *subkeys = random.split(self.key)
             if t != 0:

@@ -54,20 +54,24 @@ class PMCMC:
 
         self._thetas = self._thetas.at[:, 0].set(jnp.array(list(init_theta.values())))
         # TODO: Fix the disgusting array hack on these surrounding lines
-        self._likelihoods = self._likelihoods.at[0].set(prior.get_likelihood(self._thetas[:, 0]))
+        self._likelihoods = self._likelihoods.at[0].set(
+            prior.get_likelihood(self._thetas[:, 0])
+        )
 
         self.theta_dictionary_template = init_theta
 
         if jnp.isfinite(self._likelihoods[0]):
             # Set the initial MLE estimates using initial theta.
             pf_output = self._run_filter(theta_proposal=init_theta)
-            self._likelihoods = self._likelihoods.at[0].set(jnp.sum(pf_output.likelihood))
+            self._likelihoods = self._likelihoods.at[0].set(
+                jnp.sum(pf_output.likelihood)
+            )
             self.update_new_mle(
-                        new_likelihood=self._likelihoods[0],
-                        particle_estimates=pf_output.hosp_estimates,
-                        particle_states=pf_output.states,
-                        particle_betas=pf_output.betas,
-                    )
+                new_likelihood=self._likelihoods[0],
+                particle_estimates=pf_output.hosp_estimates,
+                particle_states=pf_output.states,
+                particle_betas=pf_output.betas,
+            )
 
     def run(self) -> None:
         """Runs the MCMC algorithm.
@@ -81,7 +85,9 @@ class PMCMC:
         Returns:
             None. Quantities of interest are accessible via the instance attributes.
         """
-        for i in tqdm(range(1, self._iterations), desc="PMCMC Progress", colour="MAGENTA"):
+        for i in tqdm(
+            range(1, self._iterations), desc="PMCMC Progress", colour="MAGENTA"
+        ):
             theta_prev = self._thetas[:, i - 1]
             theta_prop = self.generate_theta_proposal(previous_theta=theta_prev)
 
@@ -150,7 +156,7 @@ class PMCMC:
             location_code=self.location_settings["location_code"],
             target_date=self.location_settings["target_date"],
             runtime=self.location_settings["runtime"],
-            logger=self.logger
+            logger=self.logger,
         )
         pf_output = pf_algo.run(
             observation_data=self.observation_data, theta=theta_proposal

@@ -85,7 +85,7 @@ def get_data_since_week_26(df: pd.DataFrame, target_date: pd.Timestamp):
 def get_beta_min_max_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Function to get the appropriate range of data for the beta min/max calculation.
-    See Jupyter Noteboook min_max_beta_20240626.ipynb for usage.
+    See Jupyter Noteboook 20240626_min_max_beta.ipynb for usage.
 
     :param df: A single state's hospitalization data.
     :return: The filtered df with data between the required dates.
