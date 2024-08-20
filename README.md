@@ -1,4 +1,4 @@
-# Particle Filter --- Forecasting Hospitalizations
+# PMCMC --- Forecasting Flu Hospitalizations
 The goal of this project is to predict new flu cases using PMCMC (Particle Markov Chain Monte Carlo) and trend forecasting. We model the state of our system using an SIRH 
 model, and we infer the transmission rate using PMCMC.
 
