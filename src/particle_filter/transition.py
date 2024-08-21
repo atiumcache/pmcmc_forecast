@@ -4,6 +4,7 @@ import jax.numpy as jnp
 import jax.random as random
 from jax import Array, jit
 from jax.typing import ArrayLike
+from functools import partial
 
 from src.particle_filter.parameters import ModelParameters
 
@@ -20,8 +21,10 @@ class Transition(ABC):
         """
         self.params = ModelParameters(config_file)
 
+    @partial(jit, static_argnames=("self",))
     def det_component(self, state: ArrayLike, t: int) -> Array:
-        """The deterministic component of the SDE model.
+        """
+        The deterministic component of the SDE model.
 
         Args:
             t: A float value representing the current time point.
@@ -29,8 +32,13 @@ class Transition(ABC):
 
         Returns:
             A NDArray of numerical derivatives of the state.
+            
+        Note: 
+            The method is wrapped with JIT, where 'self' is declared as static.
+            Thus, changes to the instance attributes will not be recognized. 
+            If we want to be able to update parameters throughout a PF run, 
+            we would need to change this functionality. 
         """
-        self.params.update_all(key=3)
         S, I, R, H, new_H, beta = state  # unpack the state variables
         N = S + I + R + H  # compute the total population
 
@@ -55,7 +63,7 @@ class Transition(ABC):
         raise NotImplementedError("Subclasses must implement this method.")
 
     @abstractmethod
-    def update_beta(self):
+    def update_beta(self, **kwargs):
         raise NotImplementedError("Subclasses must implement this method.")
 
 
@@ -63,8 +71,10 @@ class OUModel(Transition):
     def __init__(self, config_file: str):
         super().__init__(config_file)
 
+    @partial(jit, static_argnames=("self",))
     def sto_component(self, state: ArrayLike, dt: float, key: KeyArray) -> Array:
-        """The stochastic component of the SDE model.
+        """
+        The stochastic component of the SDE model.
         Utilizes Wiener process for state variables (S, I, R, H).
 
         Args:
@@ -74,6 +84,12 @@ class OUModel(Transition):
 
         Returns:
             A NDArray of stochastic increments.
+        
+        Note:
+            The method is wrapped with JIT, where 'self' is declared as static.
+            Thus, changes to the instance attributes will not be recognized. 
+            If we want to be able to update parameters throughout a PF run, 
+            we would need to change this functionality. 
         """
         S, I, R, H, new_H, beta = state  # unpack the state variables
 
@@ -100,8 +116,9 @@ class OUModel(Transition):
         """Update beta according to an OU process.
 
         Args:
-            state: A NDArray holding the current state of the system.
-            dt: A float value representing the time step.
+            beta: Current value of beta.
+            dt: A float value representing the time increments.
+            t: Current time step. Only used if beta is time-dependent/functional.
             key: A PRNGKey for random number generation.
 
         Returns:

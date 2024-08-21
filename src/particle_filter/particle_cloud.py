@@ -287,31 +287,6 @@ class ParticleCloud:
         self.weights = self.weights.at[:, t].set(new_weights)
         self.save_likelihood(new_weights, t)
 
-    def compute_all_weights_loop(self, reported_data: int | float, t: int) -> None:
-        """
-        Update the weights for every particle. Saves the Monte Carlo
-        likelihood estimate for the weights.
-
-        Args:
-            reported_data: Reported new hospitalization case counts at time t.
-            t: current time step.
-
-        Returns:
-            None. Updates the instance weights directly.
-        """
-        new_weights = jnp.zeros(self.settings.num_particles)
-
-        for p in range(self.settings.num_particles):
-            hosp_estimate = self.hosp_estimates[p, t]
-            new_weight = self._compute_single_weight(
-                reported_data=reported_data,
-                particle_estimate=hosp_estimate,
-                r=self.settings.dispersion,
-            )
-            new_weights = new_weights.at[p].set(new_weight)
-        self.weights = self.weights.at[:, t].set(new_weights)
-        self.save_likelihood(new_weights, t)
-
     def save_likelihood(self, weights: jnp.ndarray, t: int) -> None:
         """Saves the Monte Carlo estimate of the likelihood at time t.
 
