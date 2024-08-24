@@ -32,12 +32,12 @@ class Transition(ABC):
 
         Returns:
             A NDArray of numerical derivatives of the state.
-            
-        Note: 
+
+        Note:
             The method is wrapped with JIT, where 'self' is declared as static.
-            Thus, changes to the instance attributes will not be recognized. 
-            If we want to be able to update parameters throughout a PF run, 
-            we would need to change this functionality. 
+            Thus, changes to the instance attributes will not be recognized.
+            If we want to be able to update parameters throughout a PF run,
+            we would need to change this functionality.
         """
         S, I, R, H, new_H, beta = state  # unpack the state variables
         N = S + I + R + H  # compute the total population
@@ -84,12 +84,12 @@ class OUModel(Transition):
 
         Returns:
             A NDArray of stochastic increments.
-        
+
         Note:
             The method is wrapped with JIT, where 'self' is declared as static.
-            Thus, changes to the instance attributes will not be recognized. 
-            If we want to be able to update parameters throughout a PF run, 
-            we would need to change this functionality. 
+            Thus, changes to the instance attributes will not be recognized.
+            If we want to be able to update parameters throughout a PF run,
+            we would need to change this functionality.
         """
         S, I, R, H, new_H, beta = state  # unpack the state variables
 

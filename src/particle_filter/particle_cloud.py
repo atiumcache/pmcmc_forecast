@@ -313,15 +313,8 @@ class ParticleCloud:
         norm_weights = log_norm(self.weights[:, t])
         self.weights = self.weights.at[:, t].set(norm_weights)
 
-    def resample(self, t: int) -> None:
-        """Systematic resampling algorithm.
+    def resample_deprecated(self, t: int) -> None:
 
-        Args:
-            t: current time step
-
-        Returns:
-            None. Directly updates the instance states and beta values.
-        """
         resampling_indices = jnp.zeros(self.settings.num_particles, dtype=int)
         cdf_log = jacobian(self.weights[:, t])
         self.key, subkey = random.split(self.key)
@@ -341,6 +334,50 @@ class ParticleCloud:
             while i < self.settings.num_particles and u_j > cdf_log[i]:
                 i += 1
             resampling_indices = resampling_indices.at[j].set(i)
+
+        self.all_resamples = self.all_resamples.at[:, :, t].set(resampling_indices)
+        self.states = self.states.at[:, :, t].set(self.states[resampling_indices, :, t])
+
+    def resample(self, t: int) -> None:
+        """
+        Systematic resampling algorithm.
+
+        Args:
+            t: current time step
+
+        Returns:
+            None. Directly updates the instance states and beta values.
+        """
+        cdf_log = jacobian(self.weights[:, t])
+        self.key, subkey = random.split(self.key)
+        u = random.uniform(
+            key=subkey,
+            shape=(),
+            dtype=float,
+            minval=0,
+            maxval=1 / self.settings.num_particles,
+        )
+
+        def scan_body(i, j):
+            u_j = jnp.log(u + (j / self.settings.num_particles))
+
+            def cond_fun(loop_vars):
+                i, _ = loop_vars
+                return jnp.logical_and(
+                    i < self.settings.num_particles, u_j > cdf_log[i]
+                )
+
+            def body_fun(loop_vars):
+                i, _ = loop_vars
+                return (i + 1, i)
+
+            i, _ = jax.lax.while_loop(cond_fun, body_fun, (i, i))
+
+            return i, i
+
+        _, resampling_indices = jax.lax.scan(
+            scan_body, 0, jnp.arange(self.settings.num_particles)
+        )
 
         self.all_resamples = self.all_resamples.at[:, :, t].set(resampling_indices)
         self.states = self.states.at[:, :, t].set(self.states[resampling_indices, :, t])
@@ -371,13 +408,13 @@ def jacobian(input_array: ArrayLike) -> Array:
         input_array: An array of values to sum.
 
     Returns:
-        The vector of partial sums of the input array.
+        delta: The vector of partial sums of the input array.
     """
     n = len(input_array)
     delta = jnp.zeros(n)
     delta = delta.at[0].set(input_array[0])
     for i in range(1, n):
-        delta_i = max(input_array[i], delta[i - 1]) + jnp.log(
+        delta_i = jnp.max(jnp.array([input_array[i], delta[i - 1]])) + jnp.log(
             1 + jnp.exp(-1 * jnp.abs(delta[i - 1] - input_array[i]))
         )
         delta = delta.at[i].set(delta_i)

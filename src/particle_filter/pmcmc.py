@@ -91,7 +91,7 @@ class PMCMC:
             theta_prev = self._thetas[:, i - 1]
             theta_prop = self.generate_theta_proposal(previous_theta=theta_prev)
 
-            proposal_likelihood = self._prior.get_likelihood(theta_prop)
+            proposal_likelihood = self._prior.get_likelihood(theta=theta_prop)
 
             if jnp.isfinite(proposal_likelihood):
                 pf_output = self._run_filter(theta_proposal=theta_prop)
@@ -110,6 +110,8 @@ class PMCMC:
             else:
                 # Reject automatically, because the ratio is negative infinity.
                 self.reject_proposal(i)
+
+            self.log_status(iteration=i, theta=self._thetas[:, i])
 
             # TODO: Implement covariance update
             # self.update_cov(i)
@@ -256,8 +258,7 @@ class PMCMC:
     @property
     def mle_hospitalizations(self):
         """
-        Get the hospitalization estimates from the maximum likelihood
-        run of the particle filter.
+        Get the hospitalization estimates from the maximum likelihood run of the particle filter.
         """
         return self._mle_hospitalizations
 
@@ -279,3 +280,13 @@ class PMCMC:
         # Log the contents of the configuration file
         logger.info("Logging configuration file contents:")
         logger.info(config_contents)
+
+    def log_status(self, iteration: int, theta: Array | Dict):
+        """Log the current status of the algorithm."""
+        accept_ratio = sum(self._accept_record[:iteration]) / iteration
+        theta = self._convert_theta_to_dict(theta)
+        theta_string_list = [f"{key}: {value}," for key, value in theta.items()]
+        theta_string = "".join(theta_string_list)
+        self.logger.info(
+            f"Iteration: {iteration} | Accept Ratio: {accept_ratio} | {theta_string}"
+        )

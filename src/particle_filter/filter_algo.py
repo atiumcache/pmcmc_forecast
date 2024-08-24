@@ -15,14 +15,9 @@ from src.particle_filter.transition import OUModel
 from logging import Logger
 
 from jax import random
+from collections import namedtuple
 
-
-@dataclass
-class PFOutput:
-    states: ArrayLike
-    likelihood: ArrayLike
-    hosp_estimates: ArrayLike
-    betas: ArrayLike
+PFOutput = namedtuple("PFOutput", ["states", "likelihood", "hosp_estimates", "betas"])
 
 
 class ParticleFilterAlgo:
