@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#SBATCH --job-name=pf-flu-prediction
-#SBATCH --output=/scratch/apa235/filter_forecast_output.txt
+#SBATCH --job-name=pmcmc-flu-prediction
+#SBATCH --output=/scratch/apa235/pmcmc_output.txt
 #SBATCH --nodes=1
-#SBATCH --mincpus=28
+#SBATCH --mincpus=4
 #SBATCH --time=24:00:00
 #SBATCH --chdir=/projects/math_cheny/pmcmc_forecast
 #SBATCH --mem=32GB
@@ -17,9 +17,6 @@ python3 -m ensurepip
 python3 -m pip install -r ./requirements.txt
 echo -e "\n Installed Python packages\n"
 
-module load R/4.2.3
-echo -e "\n Loaded R\n"
-
 echo -e "\n Running the Python script... \n"
-python3 forecast_all_states.py
+python3 -m src.testing_script
 echo -e "\n Completed job.\n"

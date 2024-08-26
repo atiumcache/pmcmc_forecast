@@ -1,18 +1,18 @@
 # config.toml
 
 [mcmc]
-iterations = 100
+iterations = 5000
 burn_in = 10
 # initial_theta overrides other parameters.
 # if a parameter is set here, then it will
 # be estimated by MCMC. The value set here
 # will override the filter_params below.
-initial_theta = [{'dispersion' = 40},
+initial_theta = [{'dispersion' = 30},
                  {'dispersion' = 60},
                  {'dispersion' = 5}]
 
 [filter_params]
-num_particles = 3
+num_particles = 100
 dt = 1.0
 seed_size = 0.03
 dispersion = 50
@@ -20,7 +20,6 @@ beta_prior = [0.10, 0.3]
 
 [model_params]
 gamma = {value = 0.06, is_fixed = true}
-# gamma = {dist = "normal", loc = 0.06, scale = 0.005, is_fixed = false}
 mu = {value = 0.004, is_fixed = true}
 q = {value = 0.1, is_fixed = true}
 eta = {value = 0.1, is_fixed = true}
