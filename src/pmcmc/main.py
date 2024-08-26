@@ -12,11 +12,11 @@ import pandas as pd
 import toml
 from jax import Array
 
-import paths
-from src.particle_filter.helpers import get_data_since_week_26
-from src.particle_filter.location import Location
-from src.particle_filter.pmcmc import PMCMC
-from src.particle_filter.prior import UniformPrior
+from src import paths
+from src.pmcmc.helpers import get_data_since_week_26
+from src.pmcmc.location import Location
+from src.pmcmc.pmcmc import PMCMC
+from src.pmcmc.prior import UniformPrior
 
 
 def main(location_code: str, target_date: str) -> Array:
@@ -51,7 +51,7 @@ def main(location_code: str, target_date: str) -> Array:
         "runtime": time_steps,
     }
 
-    config_path = path.join(paths.PF_DIR, "config.toml")
+    config_path = path.join(paths.PMCMC_DIR, "config.toml")
     config = toml.load(config_path)
 
     prior = UniformPrior()

@@ -15,7 +15,7 @@ from typing import Dict, List
 
 import pandas as pd
 
-from src import particle_filter
+from src import pmcmc
 from src.hosp_forecast import LSODA_forecast
 
 logger = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ def process_date(
         location_to_state: dictionary that maps locations codes to abbreviations
     """
     # Generate beta estimates from observed hospitalizations
-    particle_filter.main(location_code, date)
+    pmcmc.main(location_code, date)
     datetime_now = datetime.datetime.now()
     logger.info(
         f"Completed PF for location {location_code}: {date}. Time: {datetime_now}"

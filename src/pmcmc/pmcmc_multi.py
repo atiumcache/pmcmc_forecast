@@ -1,14 +1,20 @@
-from typing import Any, Callable, Dict, Tuple, List
+import json
+import os
+from os import path
+from typing import Any, Dict, List
+
 import jax.numpy as jnp
 import jax.random as random
 from jax import Array, vmap
 from jax.numpy.linalg import cholesky
 from jax.typing import ArrayLike
-from tqdm.notebook import tqdm
-from src.particle_filter.filter_algo import PFOutput
-from src.particle_filter.initialize_filter import initialize_particle_filter
-from src.particle_filter.logger import get_logger
-from src.particle_filter.prior import Prior
+from tqdm import tqdm
+
+from src import paths
+from src.pmcmc.filter_algo import PFOutput
+from src.pmcmc.initialize_filter import initialize_particle_filter
+from src.pmcmc.logger import get_logger
+from src.pmcmc.prior import Prior
 
 
 class PMCMC:
@@ -67,6 +73,11 @@ class PMCMC:
 
         self.theta_dictionary_template = init_thetas[0]
 
+        json_dir = path.join(paths.PMCMC_RUNS_DIR, location_info["location_code"])
+        os.makedirs(json_dir, exist_ok=True)
+        self.json_out_path = path.join(json_dir, f"{location_info['target_date']}.json")
+        self.init_json_output_file()
+
     def run(self) -> None:
         """
         Runs the MCMC algorithm.
@@ -110,14 +121,19 @@ class PMCMC:
                 self.accept_reject(
                     theta_prop[chain], proposal_likelihood[chain], i, chain
                 )
-                self.log_status(iteration=i, theta=theta_prop[chain], chain=chain)
+                if i % 10 == 0:
+                    self.log_status(iteration=i, theta=theta_prop[chain], chain=chain)
 
-            if i % 50 == 0:
+            # TODO: Diagnose and fix R-Hat convergence check
+            """
+            if i % 10 == 0:
                 if self.chains_converged():
                     self.logger.info(
                         f"Chains converged at iteration {i}, according to R_hat convergence metric."
                     )
                     break
+            """
+            self.save_state_to_json(i)
 
             # TODO: Implement covariance update
             # self.update_cov(i)
@@ -291,6 +307,8 @@ class PMCMC:
             bool: True if chains have converged. False otherwise.
         """
         r_hat = self.gelman_rubin_diagnostic()
+        self.logger.info(f"R_hat values: {r_hat}")
+
         convergence_threshold = 1.1
         return jnp.all(r_hat < convergence_threshold).item()
 
@@ -330,10 +348,28 @@ class PMCMC:
         Log the current status of the algorithm.
         This includes acceptance ratio and current thetas.
         """
-        accept_ratio = round(sum(self._accept_record[chain, :iteration]) / iteration, ndigits=2)
+        accept_ratio = round(
+            sum(self._accept_record[chain, :iteration]) / iteration, ndigits=2
+        )
         theta = self._convert_theta_to_dict(theta)
         theta_string_list = [f"{key}: {value}" for key, value in theta.items()]
         theta_string = "".join(theta_string_list)
         self.logger.info(
             f"Iter: {iteration} | Chain: {chain} | Accept Ratio: {accept_ratio} | {theta_string}"
         )
+
+    def init_json_output_file(self) -> None:
+        """Overwrite output file if it exists."""
+        if path.exists(self.json_out_path):
+            with open(self.json_out_path, "w") as f:
+                json.dump([], f)
+
+    def save_state_to_json(self, iteration: int) -> None:
+        state = {
+            "iteration": iteration,
+            "theta_chains": self._theta_chains.tolist(),
+            "likelihoods": self._likelihoods.tolist(),
+            "accept_record": self._accept_record.tolist()[:iteration],
+        }
+        with open(self.json_out_path, "w") as f:
+            json.dump(state, f)

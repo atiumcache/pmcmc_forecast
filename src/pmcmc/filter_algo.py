@@ -1,21 +1,17 @@
 import os
-from dataclasses import dataclass
-from typing import Any, Dict, Tuple
-
-from jax import Array
-from jax.typing import ArrayLike
-from tqdm.notebook import tqdm
-
-import paths
-from src.particle_filter.global_settings import GlobalSettings
-from src.particle_filter.observation_data import ObservationData
-from src.particle_filter.output_handler import OutputHandler
-from src.particle_filter.particle_cloud import ParticleCloud
-from src.particle_filter.transition import OUModel
+from collections import namedtuple
 from logging import Logger
+from typing import Any, Dict
 
 from jax import random
-from collections import namedtuple
+from jax.typing import ArrayLike
+from tqdm import tqdm
+
+from src import paths
+from src.pmcmc.global_settings import GlobalSettings
+from src.pmcmc.observation_data import ObservationData
+from src.pmcmc.particle_cloud import ParticleCloud
+from src.pmcmc.transition import OUModel
 
 PFOutput = namedtuple("PFOutput", ["states", "likelihood", "hosp_estimates", "betas"])
 
@@ -39,7 +35,7 @@ class ParticleFilterAlgo:
         Returns:
             PFOutput object. Contains attributes of interest for use in MCMC wrapper.
         """
-        config_path = os.path.join(paths.PF_DIR, "config.toml")
+        config_path = os.path.join(paths.PMCMC_DIR, "config.toml")
 
         particles = ParticleCloud(
             settings=self.settings,

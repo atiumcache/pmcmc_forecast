@@ -7,11 +7,10 @@ from jax.numpy.linalg import cholesky
 from jax.typing import ArrayLike
 from tqdm.notebook import tqdm
 
-from src.particle_filter.filter_algo import PFOutput
-from src.particle_filter.initialize_filter import initialize_particle_filter
-from src.particle_filter.logger import get_logger
-from src.particle_filter.prior import Prior
-from src.particle_filter.logger import get_logger
+from src.pmcmc.filter_algo import PFOutput
+from src.pmcmc.initialize_filter import initialize_particle_filter
+from src.pmcmc.logger import get_logger
+from src.pmcmc.prior import Prior
 
 
 class PMCMC:

@@ -1,6 +1,6 @@
 import unittest
 
-from src.particle_filter.location import Location
+from src.pmcmc.location import Location
 
 
 class TestState(unittest.TestCase):

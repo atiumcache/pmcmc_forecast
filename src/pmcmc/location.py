@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-import paths
+from src import paths
 
 
 class Location:

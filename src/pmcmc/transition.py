@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
+from functools import partial
 
 import jax.numpy as jnp
 import jax.random as random
 from jax import Array, jit
 from jax.typing import ArrayLike
-from functools import partial
 
-from src.particle_filter.parameters import ModelParameters
+from src.pmcmc.parameters import ModelParameters
 
 # for typing hints
 KeyArray = Array

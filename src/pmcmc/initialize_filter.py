@@ -1,12 +1,11 @@
-from logging import Logger
-
 import os
+from logging import Logger
 
 import toml
 
-import paths
-from src.particle_filter.filter_algo import ParticleFilterAlgo
-from src.particle_filter.global_settings import GlobalSettings
+from src import paths
+from src.pmcmc.filter_algo import ParticleFilterAlgo
+from src.pmcmc.global_settings import GlobalSettings
 
 
 def initialize_particle_filter(
@@ -37,5 +36,5 @@ def initialize_particle_filter(
 
 
 def load_config():
-    config_path = os.path.join(paths.PF_DIR, "config.toml")
+    config_path = os.path.join(paths.PMCMC_DIR, "config.toml")
     return toml.load(config_path)

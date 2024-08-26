@@ -7,12 +7,12 @@ import numpy as np
 import pandas as pd
 from jax import random
 
-import src.particle_filter.observation_data
-import src.particle_filter.particle_cloud
-from src.particle_filter.global_settings import GlobalSettings
-from src.particle_filter.output_handler import OutputHandler
-from src.particle_filter.parameters import ModelParameters
-from src.particle_filter.transition import GaussianNoiseModel
+import src.pmcmc.observation_data
+import src.pmcmc.particle_cloud
+from src.pmcmc.global_settings import GlobalSettings
+from src.pmcmc.output_handler import OutputHandler
+from src.pmcmc.parameters import ModelParameters
+from src.pmcmc.transition import GaussianNoiseModel
 
 
 class TestParticleCloud(unittest.TestCase):

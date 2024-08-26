@@ -5,7 +5,7 @@ from datetime import datetime
 import pytz
 import toml
 
-import paths
+from src import paths
 
 
 def get_logger():
@@ -18,7 +18,7 @@ def get_logger():
     logging_path = os.path.join(
         log_dir, f'{time_now.strftime("%Y-%m-%d_%H-%M-%S")}.log'
     )
-    config_path = os.path.join(paths.PF_DIR, "config.toml")
+    config_path = os.path.join(paths.PMCMC_DIR, "config.toml")
 
     log_level_config = toml.load(config_path)["logging"]["level"]
     log_level = getattr(logging, log_level_config.upper(), logging.INFO)

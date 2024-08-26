@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PMCMC Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>PMCMC Dashboard</h1>
+    <div id="likelihood_plot"></div>
+    <div id="param_plots"></div>
+    <div id="accept_records"></div>
+
+    <script>
+        function fetchData() {
+            $.getJSON('/data', function(data) {
+                updatePlots(data);
+                updateAcceptRecords(data);
+            });
+        }
+
+        function updatePlots(data) {
+            const iterations = data.iteration;
+            const likelihoods = data.likelihoods;
+            const theta_chains = data.theta_chains;
+
+            // Update likelihood plot
+            const likelihood_traces = [];
+            for (let chain = 0; chain < likelihoods.length; chain++) {
+                likelihood_traces.push({
+                    x: Array.from({length: iterations}, (_, i) => i + 1),
+                    y: likelihoods[chain],
+                    mode: 'lines',
+                    name: `Chain ${chain + 1}`
+                });
+            }
+            Plotly.newPlot('likelihood_plot', likelihood_traces, {title: 'Likelihoods'});
+
+            // Update parameter plots
+            const num_params = theta_chains[0].length;
+            const param_plots = document.getElementById('param_plots');
+            param_plots.innerHTML = '';
+            for (let param = 0; param < num_params; param++) {
+                const param_div = document.createElement('div');
+                param_div.id = `param_plot_${param}`;
+                param_plots.appendChild(param_div);
+
+                const param_traces = [];
+                for (let chain = 0; chain < theta_chains.length; chain++) {
+                    param_traces.push({
+                        x: Array.from({length: iterations}, (_, i) => i + 1),
+                        y: theta_chains[chain][param],
+                        mode: 'lines',
+                        name: `Chain ${chain + 1}`
+                    });
+                }
+                Plotly.newPlot(param_div.id, param_traces, {title: `Parameter ${param + 1}`});
+            }
+        }
+
+        function updateAcceptRecords(data) {
+            const accept_records = data.accept_record;
+            const accept_records_div = document.getElementById('accept_records');
+            accept_records_div.innerHTML = '<h2>Accept Records</h2>';
+
+            for (let chain = 0; chain < accept_records.length; chain++) {
+                // Calculate the average of the current chain
+                const slice = accept_records[chain].slice(0, data.iteration + 1)
+                const sum = slice.reduce((a, b) => a + b, 0);
+                const average = sum / slice.length;
+
+
+                // Create a div element to display the average
+                const record_div = document.createElement('div');
+                record_div.innerText = `Chain ${chain + 1}: ${average.toFixed(2)}`; // Display the average with 2 decimal places
+                accept_records_div.appendChild(record_div);
+            }
+        }
+
+
+        setInterval(fetchData, 5000); // Fetch data every 5 seconds
+    </script>
+</body>
+</html>

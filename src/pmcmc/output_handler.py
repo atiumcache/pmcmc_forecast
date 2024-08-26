@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 from jax.typing import ArrayLike
 
-import paths
-from src.particle_filter.global_settings import GlobalSettings
+from src import paths
+from src.pmcmc.global_settings import GlobalSettings
 
 
 class OutputHandler:

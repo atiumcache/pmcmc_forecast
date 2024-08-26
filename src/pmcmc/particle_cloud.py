@@ -12,8 +12,8 @@ from jax.scipy.stats import nbinom as nbinom
 from jax.scipy.stats import norm as normal
 from jax.typing import ArrayLike
 
-from src.particle_filter.global_settings import GlobalSettings
-from src.particle_filter.transition import Transition
+from src.pmcmc.global_settings import GlobalSettings
+from src.pmcmc.transition import Transition
 
 KeyArray = Array
 
@@ -392,7 +392,7 @@ class ParticleCloud:
         betas = self.states[:, 5, t]
         self.key, subkey = random.split(self.key)
         perturbations = random.normal(
-            key=subkey, shape=(self.settings.num_particles), dtype=float
+            key=subkey, shape=(self.settings.num_particles,), dtype=float
         )
         betas += perturbations * 0.005
         self.states = self.states.at[:, 5, t].set(betas)
