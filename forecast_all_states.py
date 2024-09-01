@@ -66,7 +66,8 @@ def process_date(
     location_code: str, date: str, location_to_state: Dict, working_dir: str
 ) -> None:
     """
-    The main flow to predict future hospitalizations. Final results are output to csv files defined in LSODA_forecast.
+    The main flow to predict future hospitalizations.
+    Final results are output to csv files defined in LSODA_forecast.
 
     Args:
         working_dir: the current working directory
