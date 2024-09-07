@@ -6,8 +6,15 @@
 #*[             we forecast beta_t for the next 28-days. This method is applied to bootstrap      ]*#
 #*[             samples. Our changepoint random forests produce an ensemble forecast on beta_t.   ]*#
 #*[ Updated   : August 17, 2024                                                                   ]*#
-#*[ Developers: Jaechoul Lee                                                                      ]*#
+#*[ Developers: Jaechoul Lee | Modified by: Andrew Attilio                                        ]*#
 #*[-----------------------------------------------------------------------------------------------]*#
+
+args <- commandArgs(trailingOnly = TRUE)
+
+input.betas.path <- args[1]  # path to csv file containing estimated beta time series
+input.covariates.path <- args[2]  # path to csv file containing covariate time series
+func.lib.path <- args[3]  # R script containing helper functions
+output.path <- args[4]  # absolute path to output the bootstrapped forecasts
 
 # Setup directories
 WD <- getwd()
@@ -17,21 +24,33 @@ WD.inp <- paste( WD, "/!1Research/Projects/Epidemiology/P05_FluSIR/Analysis/", s
 WD.inp <- "H:/Documents/!1Research/Projects/Epidemiology/P05_FluSIR/Analysis/"          # on Windows
 
 # Load required packages
-library( dplyr )
-library( ggplot2 )
-library( GGally )
-library( forecast )
+.libPaths("/scratch/apa235/R_packages")
+
+if(!require(dplyr)){
+    install.packages("dplyr", lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
+    library(dplyr)
+}
+
+if(!require(glue)){
+    install.packages("glue", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
+    library(glue)
+}
+
+if(!require(forecast)){
+    install.packages("forecast", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
+    library(forecast)
+}
 
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 1-1: Read the beta_t average series and its predictors
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Read the estimated beta_t average series for the period from 2023-08-10 to 2023-10-28
-df.y_all <- read.csv( file=paste( WD.inp, "data_04_average_beta.csv", sep="" ), header=TRUE )
+df.y_all <- read.csv( file=input.betas.path, header=TRUE )
 colnames( df.y_all ) <- c( "time_0", "beta" )
 
 # Read the covariate series for the period from 2023-08-10 to 2023-10-28
-df.z_all <- read.csv( file=paste( WD.inp, "data_arizona_factors_test.csv", sep="" ), header=TRUE )
+df.z_all <- read.csv( file=input.covariates.path, header=TRUE )
 colnames( df.z_all ) <- c( "time_0", "date", "mean_temp", "precip_hours", "max_rel_humidity", 
                            "sun_durn", "wind_speed", "swave_radiat", "google_search" )
 
@@ -42,46 +61,6 @@ df.yz_all <- merge( df.y_all, df.z_all ) |>
                 select( time_1, date, beta, mean_temp, precip_hours, max_rel_humidity,
                         sun_durn, wind_speed, swave_radiat, google_search )
 head( df.yz_all )
-
-#*[-----------------------------------------------------------------------------------------------]*#
-### Step 1-2: Preliminary EDA
-#*[-----------------------------------------------------------------------------------------------]*#
-
-# Extract beta_t and its predictors
-df.yz_ini <- df.yz_all |>
-                select( beta, mean_temp, precip_hours, max_rel_humidity, sun_durn, 
-                        wind_speed, swave_radiat, google_search )
-head( df.yz_ini )
-
-# Correlation between beta_t and its predictors
-cor( df.yz_ini )
-
-dev.new( width=6, height=6 )
-ggcorr( df.yz_ini )
-
-# Scatterplot matrix
-dev.new( width=6, height=6 )
-ggpairs( df.yz_ini, upper=list( continuous="points" ), lower=list( continuous="cor" ) ) +
-   theme_bw()
-
-# Transform predictors
-df.yz_fin <- df.yz_ini |>
-                mutate( ln.precip_hours = log( precip_hours+1 ),
-                        ln.google_search = log( google_search+1 ) ) |>
-                select( beta, mean_temp, ln.precip_hours, max_rel_humidity, sun_durn, 
-                        wind_speed, swave_radiat, ln.google_search )
-head( df.yz_fin )
-
-# Correlation between beta_t and its predictors
-cor( df.yz_fin )
-
-dev.new( width=6, height=6 )
-ggcorr( df.yz_fin )
-
-# Scatterplot matrix
-dev.new( width=6, height=6 )
-ggpairs( df.yz_fin, upper=list( continuous="points" ), lower=list( continuous="cor" ) ) +
-   theme_bw()
 
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 1-3: Determine a target beta_t series for the t_bgn:t_end period
@@ -122,7 +101,7 @@ z.t_all <- df.yz_fin[t_prd,] |>
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Load the R code for GA changepoint detection with changepoint + AR(1) model and GA
-source( file=paste( WD.inp, "lib_ga-PLT_v2-3.R", sep="" ) )
+source( file=func.lib.path )
 
 # Fit a "changepoints + AR(1)" model with a given changepoint configuration
 fit.CPTar <- function( y, trd.type=c("mean","linear","quadratic","cubic"), cp, z=NULL ) {
@@ -320,17 +299,6 @@ for ( i_boot in 1:n_boot ) {
 # Make time series formatted forecasts from bootstrap samples
 lb.t_fct.boot <- boot_fct |>
                    as.data.frame() |> ts( start=t_end+1, frequency=1 )
-dim( lb.t_fct.boot )                                 # [1] 28 n_boot
-
-# Plot all forecasts
-dev.new( width=10.5, height=4 )
-autoplot( lb.t ) +
-   autolayer( lb.t_fct.boot[,1:n_boot], col=TRUE ) +
-   autolayer( lb.t, col=FALSE ) +
-   ylab( "log( (b.t - b.t_max)/(b.t_max - b.t) )" ) +
-   xlab( "Number of days from 2023-08-10 (Day 1)" ) +
-   guides( col="none" ) +
-   theme_bw()
 
 # Backtransform via generalized logistic transformation
 b.t_fct.boot = transf_logistic( x_logit=lb.t_fct.boot, x_min=b.t_min, x_max=b.t_max )

@@ -18,7 +18,7 @@ from src import paths
 from src.pmcmc.helpers import get_data_since_week_26
 from src.pmcmc.location import Location
 from src.pmcmc.pmcmc import PMCMC
-from src.pmcmc.prior import UniformPrior, Prior
+from src.pmcmc.prior import Prior, UniformPrior
 
 
 def main(location_code: str, target_date: str) -> Array:
@@ -34,9 +34,7 @@ def main(location_code: str, target_date: str) -> Array:
     Returns:
           An array of estimated beta values for each step in the time series.
     """
-    observations, location = get_hosp_observations(
-        location_code, target_date
-    )
+    observations, location = get_hosp_observations(location_code, target_date)
 
     # Determine number of days for PF to estimate, based on length of data.
     time_steps = len(observations)
@@ -51,7 +49,7 @@ def main(location_code: str, target_date: str) -> Array:
     config_path = path.join(paths.PMCMC_DIR, "config.toml")
     config = toml.load(config_path)
 
-    prior = UniformPrior()
+    prior = get_prior()
 
     pmcmc_algo = PMCMC(
         iterations=config["mcmc"]["iterations"],
@@ -63,7 +61,7 @@ def main(location_code: str, target_date: str) -> Array:
     )
     pmcmc_algo.run()
 
-    # TODO: Output betas (and other data?) to csv or database for analysis.
+    # TODO: Output betas (and other data?) to CSV for analysis.
 
     return pmcmc_algo.mle_betas
 
@@ -82,5 +80,13 @@ def get_hosp_observations(location_code, target_date) -> (ArrayLike, Location):
     return observations, location
 
 
-def get_prior_function() -> Callable | Prior:
+def get_prior() -> Prior:
+    """
+    Returns an instance of a Prior subclass.
+
+    Currently just returns UniformPrior.
+
+    Will utilize Kernel Density Estimation (KDE) in the future
+    to create a Prior from previous week's data.
+    """
     return UniformPrior()

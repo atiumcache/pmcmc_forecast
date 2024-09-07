@@ -1,3 +1,8 @@
+"""
+This script is used for testing the PMCMC algo
+on NAU's Monsoon HPC.
+"""
+
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -60,9 +65,11 @@ num_draws = case_reports.shape
 
 noisy_case_reports = nbinom.rvs(n=r, p=p, size=num_draws)
 
-from src.pmcmc.pmcmc_multi import PMCMC
 from os import path
+
 import toml
+
+from src.pmcmc.pmcmc_multi import PMCMC
 from src.pmcmc.prior import UniformPrior
 
 location_info = {
