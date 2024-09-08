@@ -61,7 +61,7 @@ def main(location_code: str, target_date: str) -> Array:
     )
     pmcmc_algo.run()
 
-    # TODO: Output betas (and other data?) to CSV for analysis.
+    pmcmc_algo.output_data()
 
     return pmcmc_algo.mle_betas
 
@@ -90,3 +90,7 @@ def get_prior() -> Prior:
     to create a Prior from previous week's data.
     """
     return UniformPrior()
+
+
+if __name__ == '__main__':
+    main('04', '2024-04-20')

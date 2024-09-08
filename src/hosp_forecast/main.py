@@ -16,11 +16,12 @@ from typing import Callable
 
 import numpy as np
 import pandas as pd
+from jax import Array
 from scipy.integrate import solve_ivp
 from scipy.stats import nbinom
 
 
-def main(location_code: str, reference_date: str) -> None:
+def main(forecasted_betas: Array, location_code: str, reference_date: str) -> None:
     all_data = DataReader(location_code, reference_date)
 
     endpoint = len(all_data.estimated_state) - 1

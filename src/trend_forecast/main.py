@@ -1,12 +1,13 @@
 import subprocess
 from os import path
-from src import paths
 
-from jax import Array
 import jax.numpy as jnp
 import pandas as pd
+from jax import Array
 from numpy import array as np_array
 from numpy import savetxt as np_savetxt
+
+from src import paths
 
 
 def main(beta_estimates: Array, loc_code: str, target_date: str) -> Array:

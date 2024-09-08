@@ -9,6 +9,7 @@ from jax import Array, vmap
 from jax.numpy.linalg import cholesky
 from jax.typing import ArrayLike
 from tqdm import tqdm
+import pandas as pd
 
 from src import paths
 from src.pmcmc.filter_algo import PFOutput
@@ -137,6 +138,26 @@ class PMCMC:
 
             # TODO: Implement covariance update
             # self.update_cov(i)
+
+    def output_data(self):
+        """
+        Saves data to CSV for analysis and/or later use.
+        """
+        loc_code: str = self.location_settings['location_code']
+        files_dir: str = path.join(paths.PMCMC_RUNS_DIR, loc_code)
+        mle_betas_path: str = path.join(files_dir, 'mle_betas.csv')
+        mle_states_path: str = path.join(files_dir, 'mle_states.npy')
+        likelihoods_path: str = path.join(files_dir, 'likelihoods.npy')
+        thetas_path: str = path.join(files_dir, 'thetas.npy')
+        acceptance_path: str = path.join(files_dir, 'acceptance.csv')
+
+        betas_df = pd.DataFrame(self._mle_betas)
+        betas_df.to_csv(mle_betas_path)
+
+        jnp.save(file=mle_states_path, arr=self._mle_states)
+        jnp.save(file=likelihoods_path, arr=self._likelihoods)
+        jnp.save(file=thetas_path, arr=self._theta_chains)
+        jnp.save(file=acceptance_path, arr=self._accept_record)
 
     def generate_theta_proposal(self, previous_theta, key):
         """
