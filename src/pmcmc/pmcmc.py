@@ -119,6 +119,7 @@ class PMCMC:
                         particle_states=pf_outputs.states[chain],
                         particle_betas=pf_outputs.betas[chain],
                     )
+                    self.output_data(in_progress=True)
                 self.accept_reject(
                     theta_prop[chain], proposal_likelihood[chain], i, chain
                 )
@@ -139,17 +140,26 @@ class PMCMC:
             # TODO: Implement covariance update
             # self.update_cov(i)
 
-    def output_data(self):
+    def output_data(self, in_progress: bool = False) -> None:
         """
         Saves data to CSV for analysis and/or later use.
+
+        Args:
+            in_progress: Indicates that we are saving data while
+            the algorithm is still running. So we save to a different
+            file vs. the final output.
         """
+        f_string = ""
+        if in_progress:
+            f_string = "in_progress_"
+
         loc_code: str = self.location_settings['location_code']
         files_dir: str = path.join(paths.PMCMC_RUNS_DIR, loc_code)
-        mle_betas_path: str = path.join(files_dir, 'mle_betas.csv')
-        mle_states_path: str = path.join(files_dir, 'mle_states.npy')
-        likelihoods_path: str = path.join(files_dir, 'likelihoods.npy')
-        thetas_path: str = path.join(files_dir, 'thetas.npy')
-        acceptance_path: str = path.join(files_dir, 'acceptance.csv')
+        mle_betas_path: str = path.join(files_dir, f'{f_string}mle_betas.csv')
+        mle_states_path: str = path.join(files_dir, f'{f_string}mle_states.npy')
+        likelihoods_path: str = path.join(files_dir, f'{f_string}likelihoods.npy')
+        thetas_path: str = path.join(files_dir, f'{f_string}thetas.npy')
+        acceptance_path: str = path.join(files_dir, f'{f_string}acceptance.csv')
 
         betas_df = pd.DataFrame(self._mle_betas)
         betas_df.to_csv(mle_betas_path)
