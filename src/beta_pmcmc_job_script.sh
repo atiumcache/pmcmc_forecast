@@ -15,7 +15,9 @@ echo -e "Starting up...\n"
 module load anaconda3/2024.02
 python3 -m ensurepip
 python3 -m pip install -r ./requirements.txt
+python3 -m pip uninstall numpy
 python3 -m pip install --upgrade numexpr bottleneck
+python3 -m pip install numpy<2
 echo -e "\n Installed Python packages\n"
 
 echo -e "\n Running the Python script... \n"
