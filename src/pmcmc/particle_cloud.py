@@ -261,12 +261,11 @@ class ParticleCloud:
         Returns:
             A 1-element JAX array, containing an un-normalized weight for a single particle.
         """
-        epsilon = 0.005
-        weight = nbinom.logpmf(
-            k=reported_data,
-            n=r,
-            p=r / (r + particle_estimate + epsilon),
-        )
+        # r is serving the purpose of CV (coefficient of variation)
+        # because this is set up for a quick test and I don't want to
+        # go through the trouble of renaming at the moment.
+        std_dev = r * particle_estimate
+        weight = normal.logpdf(x=reported_data, loc=particle_estimate, scale=std_dev)
         return weight
 
     def compute_all_weights(self, reported_data: int | float, t: int) -> None:

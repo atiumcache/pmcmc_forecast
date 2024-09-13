@@ -7,9 +7,9 @@ burn_in = 10
 # if a parameter is set here, then it will
 # be estimated by MCMC. The value set here
 # will override the filter_params below.
-initial_theta = [{'dispersion' = 25},
-                 {'dispersion' = 50},
-                 {'dispersion' = 75}]
+initial_theta = [{'dispersion' = 0.2},
+                 {'dispersion' = 0.4},
+                 {'dispersion' = 0.6}]
 
 [filter_params]
 num_particles = 100
