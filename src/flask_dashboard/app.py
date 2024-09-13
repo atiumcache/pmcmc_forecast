@@ -11,7 +11,7 @@ app = Flask(__name__)
 @app.route("/data")
 def get_data():
     # TODO: Un-hardcode the following path.
-    json_path = join(paths.PMCMC_RUNS_DIR, "04", "monsoon_test_20240827.json")
+    json_path = join(paths.PMCMC_RUNS_DIR, "04", "2024-04-20.json")
     with open(json_path, "r") as f:
         data = json.load(f)
     return jsonify(data)

@@ -4,7 +4,7 @@
 #SBATCH --output=/scratch/apa235/pmcmc_beta_generation.txt
 #SBATCH --nodes=1
 #SBATCH --mincpus=8
-#SBATCH --time=24:00:00
+#SBATCH --time=36:00:00
 #SBATCH --chdir=/projects/math_cheny/pmcmc_forecast/
 #SBATCH --mem=32GB
 
@@ -15,6 +15,7 @@ echo -e "Starting up...\n"
 module load anaconda3/2024.02
 python3 -m ensurepip
 python3 -m pip install -r ./requirements.txt
+# Was having trouble on Monsoon with numpy/dependencies. Quick fix.
 python3 -m pip uninstall numpy
 python3 -m pip install --upgrade numexpr bottleneck
 python3 -m pip install numpy<2
