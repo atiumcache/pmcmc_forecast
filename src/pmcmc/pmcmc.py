@@ -163,11 +163,11 @@ class PMCMC:
 
         loc_code: str = self.location_settings['location_code']
         files_dir: str = path.join(paths.PMCMC_RUNS_DIR, loc_code)
-        mle_betas_path: str = path.join(files_dir, f'mle_betas-{current_date}.csv')
-        mle_states_path: str = path.join(files_dir, f'mle_states-{current_date}.npy')
-        likelihoods_path: str = path.join(files_dir, f'likelihoods{current_date}.npy')
-        thetas_path: str = path.join(files_dir, f'thetas-{current_date}.npy')
-        acceptance_path: str = path.join(files_dir, f'acceptance-{current_date}.csv')
+        mle_betas_path: str = path.join(files_dir, f'{f_string}mle_betas-{current_date}.csv')
+        mle_states_path: str = path.join(files_dir, f'{f_string}mle_states-{current_date}.npy')
+        likelihoods_path: str = path.join(files_dir, f'{f_string}likelihoods{current_date}.npy')
+        thetas_path: str = path.join(files_dir, f'{f_string}thetas-{current_date}.npy')
+        acceptance_path: str = path.join(files_dir, f'{f_string}acceptance-{current_date}.csv')
 
         betas_df = pd.DataFrame(self._mle_betas)
         betas_df.to_csv(mle_betas_path)
