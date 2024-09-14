@@ -1,10 +1,13 @@
 import json
 import os
+from datetime import datetime, timezone
 from os import path
 from typing import Any, Dict, List
 
 import jax.numpy as jnp
 import jax.random as random
+import \
+    pytz
 from jax import Array, vmap
 from jax.numpy.linalg import cholesky
 from jax.typing import ArrayLike
@@ -153,13 +156,18 @@ class PMCMC:
         if in_progress:
             f_string = "in_progress_"
 
+        # Get current time in MST
+        mst = pytz.timezone('MST')
+        current_time = datetime.now(mst)
+        current_date = current_time.strftime('%Y-%m-%d')
+
         loc_code: str = self.location_settings['location_code']
         files_dir: str = path.join(paths.PMCMC_RUNS_DIR, loc_code)
-        mle_betas_path: str = path.join(files_dir, f'{f_string}mle_betas.csv')
-        mle_states_path: str = path.join(files_dir, f'{f_string}mle_states.npy')
-        likelihoods_path: str = path.join(files_dir, f'{f_string}likelihoods.npy')
-        thetas_path: str = path.join(files_dir, f'{f_string}thetas.npy')
-        acceptance_path: str = path.join(files_dir, f'{f_string}acceptance.csv')
+        mle_betas_path: str = path.join(files_dir, f'mle_betas-{current_date}.csv')
+        mle_states_path: str = path.join(files_dir, f'mle_states-{current_date}.npy')
+        likelihoods_path: str = path.join(files_dir, f'likelihoods{current_date}.npy')
+        thetas_path: str = path.join(files_dir, f'thetas-{current_date}.npy')
+        acceptance_path: str = path.join(files_dir, f'acceptance-{current_date}.csv')
 
         betas_df = pd.DataFrame(self._mle_betas)
         betas_df.to_csv(mle_betas_path)
@@ -186,7 +194,7 @@ class PMCMC:
             theta_proposal: the proposed parameter vector for the current iteration.
         """
         random_params = random.normal(key=key, shape=(self._num_params,))
-        cholesky_matrix = cholesky((1.8**2 / self._num_params) * self._cov)
+        cholesky_matrix = cholesky((1.2**2 / self._num_params) * self._cov)
         theta_proposal = previous_theta + cholesky_matrix @ random_params
         return theta_proposal
 
