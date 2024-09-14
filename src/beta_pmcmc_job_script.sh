@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --mincpus=8
 #SBATCH --time=36:00:00
-#SBATCH --chdir=/projects/math_cheny/pmcmc_forecast/
+#SBATCH --chdir=/projects/math_cheny/pmcmc_tests_andrew/coeff_variation_test/
 #SBATCH --mem=32GB
 
 # added echo statements for debugging
