@@ -7,16 +7,16 @@ burn_in = 10
 # if a parameter is set here, then it will
 # be estimated by MCMC. The value set here
 # will override the filter_params below.
-initial_theta = [{'dispersion' = 0.2},
-                 {'dispersion' = 0.4},
-                 {'dispersion' = 0.6}]
+initial_theta = [{'dispersion' = 0.4},
+                 {'dispersion' = 1},
+                 {'dispersion' = 1.6}]
 
 [filter_params]
 num_particles = 100
 dt = 1.0
 seed_size = 0.03
 dispersion = 50
-beta_prior = [0.10, 0.3]
+beta_prior = [0.05, 0.3]
 
 [model_params]
 gamma = {value = 0.06, is_fixed = true}
