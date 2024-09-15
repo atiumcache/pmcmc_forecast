@@ -8,6 +8,17 @@ from numpy import array as np_array
 from numpy import savetxt as np_savetxt
 
 from src import paths
+from src.trend_forecast.covariates import get_covariate_data, output_covariates_to_csv, CovariateSelection
+
+selected_covariates = CovariateSelection(
+    mean_temp=True,
+    max_rel_humidity=True,
+    sun_duration=True,
+    wind_speed=True,
+    radiation=True,
+    google_search=False,
+    movement=False
+)
 
 
 def main(beta_estimates: Array, loc_code: str, target_date: str) -> Array:
@@ -23,7 +34,18 @@ def main(beta_estimates: Array, loc_code: str, target_date: str) -> Array:
         An array of forecasted beta values.
     """
     beta_estimates_path = beta_estimates_to_csv(beta_estimates, loc_code, target_date)
+
+    # Collect and output covariate data for R subprocess
+    covariate_df = get_covariate_data(covariates=selected_covariates,
+                                      loc_code=loc_code,
+                                      target_date=target_date,
+                                      series_length=len(beta_estimates))
+    output_covariates_to_csv(covariate_data=covariate_df,
+                             loc_code=loc_code,
+                             target_date=target_date)
+
     forecast_file_path = run_r_subprocess(loc_code, target_date, beta_estimates_path)
+
     beta_forecast = load_beta_forecast(forecast_file_path)
     return beta_forecast
 
