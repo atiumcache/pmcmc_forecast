@@ -5,11 +5,11 @@ from typing import Any, Dict, List
 
 import jax.numpy as jnp
 import jax.random as random
+import pandas as pd
 from jax import Array, vmap
 from jax.numpy.linalg import cholesky
 from jax.typing import ArrayLike
 from tqdm import tqdm
-import pandas as pd
 
 from src import paths
 from src.pmcmc.filter_algo import PFOutput
@@ -153,13 +153,13 @@ class PMCMC:
         if in_progress:
             f_string = "in_progress_"
 
-        loc_code: str = self.location_settings['location_code']
+        loc_code: str = self.location_settings["location_code"]
         files_dir: str = path.join(paths.PMCMC_RUNS_DIR, loc_code)
-        mle_betas_path: str = path.join(files_dir, f'{f_string}mle_betas.csv')
-        mle_states_path: str = path.join(files_dir, f'{f_string}mle_states.npy')
-        likelihoods_path: str = path.join(files_dir, f'{f_string}likelihoods.npy')
-        thetas_path: str = path.join(files_dir, f'{f_string}thetas.npy')
-        acceptance_path: str = path.join(files_dir, f'{f_string}acceptance.csv')
+        mle_betas_path: str = path.join(files_dir, f"{f_string}mle_betas.csv")
+        mle_states_path: str = path.join(files_dir, f"{f_string}mle_states.npy")
+        likelihoods_path: str = path.join(files_dir, f"{f_string}likelihoods.npy")
+        thetas_path: str = path.join(files_dir, f"{f_string}thetas.npy")
+        acceptance_path: str = path.join(files_dir, f"{f_string}acceptance.csv")
 
         betas_df = pd.DataFrame(self._mle_betas)
         betas_df.to_csv(mle_betas_path)

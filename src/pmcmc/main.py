@@ -92,5 +92,5 @@ def get_prior() -> Prior:
     return UniformPrior()
 
 
-if __name__ == '__main__':
-    main('04', '2024-04-20')
+if __name__ == "__main__":
+    main("04", "2024-04-20")
