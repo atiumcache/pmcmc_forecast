@@ -15,8 +15,8 @@ class UniformPrior(Prior):
     def get_likelihood(
         self,
         theta: ArrayLike,
-        min_dispersion: float | int = 0.5,
-        max_dispersion: float | int = 100,
+        min_dispersion: float | int = 0.02,
+        max_dispersion: float | int = 1.99,
     ) -> Array:
         if len(theta) != 1:
             raise ValueError(

@@ -194,7 +194,7 @@ class PMCMC:
             theta_proposal: the proposed parameter vector for the current iteration.
         """
         random_params = random.normal(key=key, shape=(self._num_params,))
-        cholesky_matrix = cholesky((1.2**2 / self._num_params) * self._cov)
+        cholesky_matrix = cholesky((2.38**2 / self._num_params) * self._cov)
         theta_proposal = previous_theta + cholesky_matrix @ random_params
         return theta_proposal
 

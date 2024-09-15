@@ -281,8 +281,9 @@ class ParticleCloud:
         Returns:
             None. Updates the instance weights directly.
         """
+        dispersion = 1 / self.settings.dispersion  # because we are estimating the inverse
         new_weights = jax.vmap(self._compute_single_weight, in_axes=(None, 0, None))(
-            reported_data, self.hosp_estimates[:, t], self.settings.dispersion
+            reported_data, self.hosp_estimates[:, t], dispersion
         )
         self.weights = self.weights.at[:, t].set(new_weights)
         self.save_likelihood(new_weights, t)
@@ -314,7 +315,7 @@ class ParticleCloud:
         self.weights = self.weights.at[:, t].set(norm_weights)
 
     def resample_deprecated(self, t: int) -> None:
-
+        """DEPRECATED. Use the self.resample method."""
         resampling_indices = jnp.zeros(self.settings.num_particles, dtype=int)
         cdf_log = jacobian(self.weights[:, t])
         self.key, subkey = random.split(self.key)
