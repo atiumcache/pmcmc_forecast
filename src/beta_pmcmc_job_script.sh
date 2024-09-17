@@ -3,7 +3,7 @@
 #SBATCH --job-name=coeff_of_var_test
 #SBATCH --output=/scratch/apa235/coeff_of_var_test.txt
 #SBATCH --nodes=1
-#SBATCH --mincpus=8
+#SBATCH --mincpus=16
 #SBATCH --time=36:00:00
 #SBATCH --chdir=/projects/math_cheny/pmcmc_tests_andrew/coeff_variation_test/
 #SBATCH --mem=32GB

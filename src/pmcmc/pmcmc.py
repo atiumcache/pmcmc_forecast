@@ -41,6 +41,7 @@ class PMCMC:
         self.observation_data = observation_data
         self.num_chains = num_chains
         self.burn_in = burn_in
+        self.diffusion_coeff = 0.1
 
         self._mle_betas = None
         self._mle_hospitalizations = None
@@ -95,6 +96,7 @@ class PMCMC:
         Returns:
             None. Quantities of interest are accessible via the instance attributes.
         """
+        self.logger.info(f'Diffusion coefficient: {self.diffusion_coeff}')
         for i in tqdm(
             range(1, self._iterations), desc="PMCMC Progress", colour="MAGENTA"
         ):
@@ -126,7 +128,7 @@ class PMCMC:
                 self.accept_reject(
                     theta_prop[chain], proposal_likelihood[chain], i, chain
                 )
-                if i % 10 == 0:
+                if i % 1 == 0:
                     self.log_status(iteration=i, theta=theta_prop[chain], chain=chain)
 
             # TODO: Diagnose and fix R-Hat convergence check
@@ -194,7 +196,7 @@ class PMCMC:
             theta_proposal: the proposed parameter vector for the current iteration.
         """
         random_params = random.normal(key=key, shape=(self._num_params,))
-        cholesky_matrix = cholesky((1.2**2 / self._num_params) * self._cov)
+        cholesky_matrix = cholesky((self.diffusion_coeff / self._num_params) * self._cov)
         theta_proposal = previous_theta + cholesky_matrix @ random_params
         return theta_proposal
 
