@@ -3,9 +3,11 @@ This module contains functions for getting covariate data.
 """
 
 from collections import namedtuple
+import os.path
 
 import pandas as pd
-from covariate_getters import *
+from src import paths
+from src.trend_forecast.covariate_getters import *
 
 CovariateSelection = namedtuple(
     "CovariateSelection",
@@ -61,4 +63,10 @@ def get_covariate_data(
 def output_covariates_to_csv(covariate_data: pd.DataFrame,
                              loc_code: str,
                              target_date: str) -> None:
-    pass
+    """
+    Outputs a covariate dataframe into a CSV file.
+    """
+    file_dir = os.path.join(paths.OUTPUT_DIR, 'covariates', loc_code)
+    os.makedirs(file_dir, exist_ok=True)
+    file_path = os.path.join(file_dir, f"{target_date}.csv")
+    covariate_data.to_csv(file_path, index=False)

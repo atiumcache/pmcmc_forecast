@@ -140,7 +140,7 @@ def get_sun_duration(loc_code: str, target_date: str, series_length: int) -> Ser
     Returns:
         A list of sunshine duration values (in hours) for the given location and date.
     """
-    return get_daily_weather_data(loc_code, target_date, 'sunshine_duration')
+    return get_daily_weather_data(loc_code, target_date, 'sunshine_duration', series_length)
 
 
 def get_wind_speed(loc_code: str, target_date: str, series_length: int) -> Series:
