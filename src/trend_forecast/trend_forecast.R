@@ -51,8 +51,8 @@ colnames( df.y_all ) <- c( "time_0", "beta" )
 
 # Read the covariate series for the period from 2023-08-10 to 2023-10-28
 df.z_all <- read.csv( file=input.covariates.path, header=TRUE )
-colnames( df.z_all ) <- c( "time_0", "date", "mean_temp", "precip_hours", "max_rel_humidity", 
-                           "sun_durn", "wind_speed", "swave_radiat", "google_search" )
+colnames( df.z_all ) <- c( "time_0", "date", "mean_temp", "max_rel_humidity",
+                           "sun_duration", "wind_speed", "swave_radiation", "google_search" )
 
 # Merge the two data frames
 df.yz_all <- merge( df.y_all, df.z_all ) |>
@@ -205,33 +205,7 @@ boot_sample <- bld.mbb.bootstrap( x=lb.t, num=n_boot, block_size=NULL ) |>
 dim( boot_sample )                                   # [1] 80 n_boot
 
 # --------------------------------------------------------------------------------
-# [Option 1] Perform changepoint random forests on lb.t using a single core
-# --------------------------------------------------------------------------------
-boot_cpt <- list()
-boot_val <- rep( NA, times=n_boot )
-boot_fct <- matrix( NA, nrow=n_fct, ncol=n_boot )
-
-set.seed( 102 + i_seed )
-for ( i_boot in 1:n_boot ) {
-   print( paste("#-----[ Loop =",i_boot,"has begun at",Sys.time(),"]-----#"), quote=FALSE )
-
-   y_boot = boot_sample[,i_boot]                     # moving-block bootstrap samlple
-   z_indx = sort( sample( 1:ncol(z.t_all), size=n_xprd, replace=FALSE ) )  # index for selected predictors
-   z_boot = z.t_all[,z_indx]                         # selected predictors
-
-   fct_out = beta_forecast( y=y_boot, z=z_boot, trd.type="mean", ic="MDL", h=n_fct, i=i_seed+10*(i_boot-1) )
-
-   boot_cpt[[i_boot]] = fct_out$ga.cpt               # GA estimated changepoints (m; tau_1,...,tau_m)
-   boot_val[i_boot]  = fct_out$ga.val                # optimized value of penalized likelihood
-
-#  boot_trd[,i_boot] = fct_out$y_trd
-#  boot_prd[,i_boot] = fct_out$y_prd
-   boot_fct[,i_boot] = fct_out$y_fct                 # forecasts
-}
-# --------------------------------------------------------------------------------
-
-# --------------------------------------------------------------------------------
-# [Option 2] Ensemble forecast via changepoint random forests using multiple cores
+# Ensemble forecast via changepoint random forests using multiple cores
 # --------------------------------------------------------------------------------
 # Load required packages for parallel computing
 library( doParallel )                           # load doParallel with foreach, iterators, parallel
@@ -239,8 +213,7 @@ library( doSNOW )
 
 # Set up parallel backend to use multiple cores
 cores <- detectCores()                          # [1] 8 on MacBook Air M2
-cl <- makeCluster( cores-3 )                    # use 5 cores, makeCluster( cores-2 )
-cl <- makeCluster( 20 )                         # use 20 cores
+cl <- makeCluster( cores-2 )                    # use 5 cores, makeCluster( cores-2 )
 registerDoSNOW( cl )                            # registerDoParallel( cl ) if doSNOW is not used
 
 # Make a progress status bar

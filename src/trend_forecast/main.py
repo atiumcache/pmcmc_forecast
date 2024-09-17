@@ -8,7 +8,9 @@ from numpy import array as np_array
 from numpy import savetxt as np_savetxt
 
 from src import paths
-from src.trend_forecast.covariates import get_covariate_data, output_covariates_to_csv, CovariateSelection
+from src.trend_forecast.covariates import (CovariateSelection,
+                                           get_covariate_data,
+                                           output_covariates_to_csv)
 
 selected_covariates = CovariateSelection(
     mean_temp=True,
@@ -17,7 +19,7 @@ selected_covariates = CovariateSelection(
     wind_speed=True,
     radiation=True,
     google_search=False,
-    movement=False
+    movement=False,
 )
 
 
@@ -35,15 +37,18 @@ def main(beta_estimates: Array, loc_code: str, target_date: str) -> Array:
     """
     beta_estimates_path = beta_estimates_to_csv(beta_estimates, loc_code, target_date)
 
-    # Collect and output covariate data for R subprocess
-    covariate_df = get_covariate_data(covariates=selected_covariates,
-                                      loc_code=loc_code,
-                                      target_date=target_date,
-                                      series_length=len(beta_estimates))
+    # Collect and output covariate data for the
+    # R subprocess to use.
+    covariate_df = get_covariate_data(
+        covariates=selected_covariates,
+        loc_code=loc_code,
+        target_date=target_date,
+        series_length=len(beta_estimates),
+    )
 
-    output_covariates_to_csv(covariate_data=covariate_df,
-                             loc_code=loc_code,
-                             target_date=target_date)
+    output_covariates_to_csv(
+        covariate_data=covariate_df, loc_code=loc_code, target_date=target_date
+    )
 
     forecast_file_path = run_r_subprocess(loc_code, target_date, beta_estimates_path)
 
@@ -128,3 +133,10 @@ def load_beta_forecast(beta_forecast_file_path: str) -> Array:
     forecast_df = pd.read_csv(beta_forecast_file_path)
     beta_forecast_array = jnp.asarray(forecast_df.values)
     return beta_forecast_array
+
+
+# Used for testing, or manual operation:
+if __name__ == '__main__':
+    run_r_subprocess(loc_code='04',
+                     target_date='2023-10-28',
+                     )
