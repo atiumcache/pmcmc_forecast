@@ -3,7 +3,7 @@
 #SBATCH --job-name=inverse_test
 #SBATCH --output=/scratch/apa235/inverse_test.txt
 #SBATCH --nodes=1
-#SBATCH --mincpus=8
+#SBATCH --mincpus=28
 #SBATCH --time=36:00:00
 #SBATCH --chdir=/projects/math_cheny/pmcmc_tests_andrew/inverse_test/
 #SBATCH --mem=32GB
