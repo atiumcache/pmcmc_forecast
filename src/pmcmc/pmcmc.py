@@ -126,7 +126,7 @@ class PMCMC:
                 self.accept_reject(
                     theta_prop[chain], proposal_likelihood[chain], i, chain
                 )
-                if i % 10 == 0:
+                if i % 1 == 0:
                     self.log_status(iteration=i, theta=theta_prop[chain], chain=chain)
 
             # TODO: Diagnose and fix R-Hat convergence check
