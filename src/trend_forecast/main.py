@@ -110,7 +110,7 @@ def run_r_subprocess(
         paths.TREND_OUTPUT_DIR, target_date, f"{loc_code}_beta_forecast.csv"
     )
     main_script_path = path.join(paths.TREND_FORECAST_DIR, "trend_forecast.R")
-    r_working_dir = path.join(paths.TREND_FORECAST_DIR, target_date)
+    r_working_dir = path.join(paths.TREND_OUTPUT_DIR, target_date)
     cmd = [
         "Rscript",
         main_script_path,
