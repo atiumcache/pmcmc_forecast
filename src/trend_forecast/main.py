@@ -110,7 +110,7 @@ def run_r_subprocess(
         paths.TREND_OUTPUT_DIR, target_date, f"{loc_code}_beta_forecast.csv"
     )
     main_script_path = path.join(paths.TREND_FORECAST_DIR, "trend_forecast.R")
-    r_working_dir = path.join(paths.TREND_FORECAST_DIR, target_date)
+    r_working_dir = path.join(paths.TREND_OUTPUT_DIR, target_date)
     cmd = [
         "Rscript",
         main_script_path,
@@ -150,6 +150,10 @@ def load_beta_forecast(beta_forecast_file_path: str) -> Array:
     forecast_df = pd.read_csv(beta_forecast_file_path)
     beta_forecast_array = jnp.asarray(forecast_df.values)
     return beta_forecast_array
+
+
+def parallel_test(loc_code):
+    pass
 
 
 # Used for testing, or manual operation:
