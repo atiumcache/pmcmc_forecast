@@ -5,7 +5,7 @@
 #*[             trend (PLT), and piecewise cubic spline (PCS). With GA estimated changepoints,    ]*#
 #*[             we forecast beta_t for the next 28-days. This method is applied to bootstrap      ]*#
 #*[             samples. Our changepoint random forests produce an ensemble forecast on beta_t.   ]*#
-#*[ Updated   : August 17, 2024                                                                   ]*#
+#*[ Updated   : Spetember 19, 2024                                                                   ]*#
 #*[ Developers: Jaechoul Lee | Modified by: Andrew Attilio                                        ]*#
 #*[-----------------------------------------------------------------------------------------------]*#
 
@@ -18,7 +18,8 @@ output.path <- args[4]  # absolute path to output the bootstrapped forecasts
 WD <- args[5]
 date_string <- args[6]
 
-WD.inp <- paste( WD, "/R_temp/", sep="" )
+WD.inp <- WD
+setwd(WD)
 
 # Load required packages
 # .libPaths("/scratch/apa235/R_packages")
@@ -43,12 +44,21 @@ if(!require(logr)){
     library(logr)
 }
 
-# TODO: Add packages: doParallel and doSNOW and logging
+if(!require(doSNOW)){
+    install.packages("doSNOW", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
+    library(doSNOW)
+}
+
+if(!require(doParallel)){
+    install.packages("doParallel", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
+    library(doParallel)
+}
 
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 1-1: Read the beta_t average series and its predictors
 #*[-----------------------------------------------------------------------------------------------]*#
-log_open("mytest.log")
+log_file_name <- paste( 'TF_log_', Sys.time(), sep="")
+log_open(log_file_name)
 log_print("Packages loaded.")
 
 # Read the estimated beta_t average series for the period from 2023-08-10 to 2023-10-28
@@ -170,7 +180,7 @@ beta_forecast <- function( y, z=NULL, trd.type=c("mean","linear","quadratic","cu
                                                      # y       : a binary series
                                                      # z       : covariates
                                                      # trd.type: fitted model order
-                                                     # ic      : penalty type for penalized log-likelihood 
+                                                     # ic      : penalty type for penalized log-likelihood
                                                      # h       : number of future values to forecast
                                                      # i       : a seed number
   # Step 1: GA changepoint detection
@@ -212,7 +222,7 @@ i_seed <- 21                                         # seed number for GA
 
 # Generate bootstrap samples
 #     The procedure is described in Bergmeir et al. (2016):
-#     Box-Cox decomposition is applied, together with STL or Loess (for non-seasonal time series), and 
+#     Box-Cox decomposition is applied, together with STL or Loess (for non-seasonal time series), and
 #     the remainder is bootstrapped using a moving block bootstrap.
 set.seed( 100 + i_seed )
 boot_sample <- bld.mbb.bootstrap( x=lb.t, num=n_boot, block_size=NULL ) |>
@@ -278,11 +288,11 @@ close( pb )
 stopCluster( cl )
 
 # Save the GA estimated changepoint results of all stations
-capture.output( ls.rf_out, file=paste( WD.inp, "prog4_RF-mean_parallel.txt", sep="" ) )
-saveRDS( ls.rf_out, file=paste( WD.inp, "prog4_RF-mean_parallel.RDS", sep="" ) )
+capture.output( ls.rf_out, file=paste( "prog4_RF-mean_parallel.txt", sep="" ) )
+saveRDS( ls.rf_out, file=paste( "prog4_RF-mean_parallel.RDS", sep="" ) )
 
 # Read the model fit results of all stations
-ls.rf_out <- readRDS( file=paste( WD.inp, "prog4_RF-mean_parallel.RDS",sep="" ) )
+ls.rf_out <- readRDS( file=paste( "prog4_RF-mean_parallel.RDS", sep="" ) )
 
 # Extract the random forests results
 boot_cpt <- list()
@@ -303,6 +313,10 @@ lb.t_fct.boot <- boot_fct |>
 # Backtransform via generalized logistic transformation
 b.t_fct.boot = transf_logistic( x_logit=lb.t_fct.boot, x_min=b.t_min, x_max=b.t_max )
 
+# Convert b.t_fct.boot to a data frame
+b_t_fct_boot_df <- as.data.frame(b.t_fct.boot)
+write.csv(b_t_fct_boot_df, "b_t_fct_boot.csv", row.names = FALSE)
+
 # Perform ensemble forecast
 ens_f95 <- structure( list(
              mean  = ts( apply( b.t_fct.boot, 1, mean ), start=t_end+1 ),            # ensemble forecast
@@ -310,7 +324,14 @@ ens_f95 <- structure( list(
              upper = ts( apply( b.t_fct.boot, 1, quantile, prob=0.975 ), start=t_end+1 ),  # upper limit
              level = 0.95),
            class = "forecast" )
+
+forecast_df <- data.frame(
+  Day = time(ens_f95$mean),  # Days corresponding to the forecast
+  Mean = as.numeric(ens_f95$mean),
+  Lower = as.numeric(ens_f95$lower),
+  Upper = as.numeric(ens_f95$upper)
 )
+write.csv(forecast_df, "ensemble_forecast.csv", row.names = FALSE)
 
 
 
