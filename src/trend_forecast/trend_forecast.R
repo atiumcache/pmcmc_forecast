@@ -216,7 +216,7 @@ log_print("Beginning Step 2-2.")
 #     International Journal of Forecasting, 32, 303-312.
 
 # Define random forests settings
-n_boot <- 3                                        # number of bootstrap samples
+n_boot <- 500                                        # number of bootstrap samples
 n_xprd <- ceiling( sqrt( ncol(z.t_all) ) )           # number of predictors selected for each tree
 i_seed <- 21                                         # seed number for GA
 
@@ -241,7 +241,7 @@ library( doSNOW )
 
 # Set up parallel backend to use multiple cores
 cores <- detectCores()                          # [1] 8 on MacBook Air M2
-cl <- makeCluster( cores-3 )                    # use 5 cores, makeCluster( cores-3 )
+cl <- makeCluster( cores-2 )                    # use 5 cores, makeCluster( cores-3 )
 registerDoSNOW( cl )                            # registerDoParallel( cl ) if doSNOW is not used
 
 log_print(paste("Parallel cluster created with DoSNOW.", cores, "cores detected."), quote=FALSE)
