@@ -48,7 +48,7 @@ def main(beta_estimates: Array, loc_code: str, target_date: str) -> Array:
         series_length=len(beta_estimates),
     )
 
-    output_covariates_to_csv(
+    covariates_path = output_covariates_to_csv(
         covariate_data=covariate_df, loc_code=loc_code, target_date=target_date
     )
 
