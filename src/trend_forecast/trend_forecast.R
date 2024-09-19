@@ -310,19 +310,7 @@ ens_f95 <- structure( list(
              upper = ts( apply( b.t_fct.boot, 1, quantile, prob=0.975 ), start=t_end+1 ),  # upper limit
              level = 0.95),
            class = "forecast" )
-
-# Create the plot
-plot <- autoplot(b.t) +
-  autolayer(ens_f95, series = "95% PI") +
-  autolayer(b.t, col = TRUE, linewidth = 0.5, series = "PF b.t") +
-  ylab("Transmission rates") +
-  xlab("Number of days from 2023-08-10 (Day 1)") +
-  guides(col = guide_legend(title = "Forecasts")) +
-  theme_bw()
-
-plot_path <- paste( WD, date_string, '_plot.png' sep="/" )
-# Save the plot as PNG
-ggsave(, plot, width = 11, height = 4, units = "in", dpi = 300)
+)
 
 
 

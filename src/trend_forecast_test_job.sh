@@ -1,12 +1,14 @@
 #!/bin/bash
 
 #SBATCH --job-name=trend_forecast_test
-#SBATCH --output=/scratch/apa235/trend_forecast_test.txt
-#SBATCH --nodes=1
+#SBATCH --output=beta_forecast_%j.out
+#SBATCH --error=beta_forecast_%j.err
+#SBATCH --nodes=4
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=64
 #SBATCH --mincpus=64
 #SBATCH --time=12:00:00
 #SBATCH --chdir=/projects/math_cheny/pmcmc_forecast/
-#SBATCH --mem=32GB
 
 # added echo statements for debugging
 
