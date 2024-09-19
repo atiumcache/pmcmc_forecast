@@ -155,6 +155,18 @@ def load_beta_forecast(beta_forecast_file_path: str) -> Array:
     return beta_forecast_array
 
 
+def process_dates(dates):
+    for date in dates:
+        run_r_subprocess(
+            loc_code="04",
+            target_date=date,
+            beta_estimates_path=path.join(paths.PF_OUTPUT_DIR, str(date), "04.csv"),
+            covariates_path=path.join(
+                paths.OUTPUT_DIR, "covariates", "06", "2023-10-28.csv"
+            ),
+        )
+
+
 def parallel_test():
     target_dates = [
         "2023-10-28",
@@ -185,16 +197,6 @@ def parallel_test():
 
     # Split the 24 dates into 4 chunks of 6 dates each.
     chunks = [target_dates[i : i + 6] for i in range(0, len(target_dates), 6)]
-
-    def process_dates(dates):
-        for date in dates:
-            run_r_subprocess(
-                loc_code="04",
-                target_date=date,
-                beta_estimates_path=path.join(paths.PF_OUTPUT_DIR, str(date), "04.csv"),
-                covariates_path=path.join(
-                    paths.OUTPUT_DIR, "covariates", "06", "2023-10-28.csv"
-                ))
 
     with Pool() as pool:
         pool.map(process_dates, chunks)
