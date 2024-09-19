@@ -15,9 +15,8 @@ input.betas.path <- args[1]  # path to csv file containing estimated beta time s
 input.covariates.path <- args[2]  # path to csv file containing covariate time series
 func.lib.path <- args[3]  # R script containing helper functions
 output.path <- args[4]  # absolute path to output the bootstrapped forecasts
-
-# Setup directories
-WD <- output.path
+WD <- args[5]
+date_string <- args[6]
 
 WD.inp <- paste( WD, "/R_temp/", sep="" )
 
@@ -321,8 +320,9 @@ plot <- autoplot(b.t) +
   guides(col = guide_legend(title = "Forecasts")) +
   theme_bw()
 
+plot_path <- paste( WD, date_string, '_plot.png' sep="/" )
 # Save the plot as PNG
-ggsave(output.path, plot, width = 11, height = 4, units = "in", dpi = 300)
+ggsave(, plot, width = 11, height = 4, units = "in", dpi = 300)
 
 
 

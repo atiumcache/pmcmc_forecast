@@ -1,5 +1,5 @@
 import subprocess
-from os import path
+from os import path, makedirs
 
 import jax.numpy as jnp
 import pandas as pd
@@ -110,6 +110,7 @@ def run_r_subprocess(
         paths.TREND_OUTPUT_DIR, target_date, f"{loc_code}_beta_forecast.csv"
     )
     main_script_path = path.join(paths.TREND_FORECAST_DIR, "trend_forecast.R")
+    r_working_dir = path.join(paths.TREND_FORECAST_DIR, target_date)
     cmd = [
         "Rscript",
         main_script_path,
@@ -117,7 +118,12 @@ def run_r_subprocess(
         input_covariates_path,
         func_lib_path,
         output_path,
+        r_working_dir,
+        target_date
     ]
+    # Ensure the directories exist
+    makedirs(path.dirname(output_path), exist_ok=True)
+    makedirs(r_working_dir, exist_ok=True)
 
     # Run the R subprocess and capture the output in real time
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
