@@ -162,7 +162,7 @@ def process_dates(dates):
             target_date=date,
             beta_estimates_path=path.join(paths.PF_OUTPUT_DIR, str(date), "04.csv"),
             covariates_path=path.join(
-                paths.OUTPUT_DIR, "covariates", "06", "2023-10-28.csv"
+                paths.OUTPUT_DIR, "covariates", "04", f"{str(date)}.csv"
             ),
         )
 
