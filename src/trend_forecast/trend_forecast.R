@@ -17,14 +17,12 @@ func.lib.path <- args[3]  # R script containing helper functions
 output.path <- args[4]  # absolute path to output the bootstrapped forecasts
 
 # Setup directories
-WD <- getwd()
+WD <- output.path
 
-WD.inp <- paste( WD, "/Documents/!1Research/Projects/Epidemiology/P05_FluSIR/Analysis/", sep="" ) # on Mac
-WD.inp <- paste( WD, "/!1Research/Projects/Epidemiology/P05_FluSIR/Analysis/", sep="" )           # on Windows
-WD.inp <- "H:/Documents/!1Research/Projects/Epidemiology/P05_FluSIR/Analysis/"          # on Windows
+WD.inp <- paste( WD, "/R_temp/", sep="" )
 
 # Load required packages
-.libPaths("/scratch/apa235/R_packages")
+# .libPaths("/scratch/apa235/R_packages")
 
 if(!require(dplyr)){
     install.packages("dplyr", lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
@@ -41,9 +39,18 @@ if(!require(forecast)){
     library(forecast)
 }
 
+if(!require(logr)){
+    install.packages("logr", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
+    library(logr)
+}
+
+# TODO: Add packages: doParallel and doSNOW and logging
+
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 1-1: Read the beta_t average series and its predictors
 #*[-----------------------------------------------------------------------------------------------]*#
+log_open("mytest.log")
+log_print("Packages loaded.")
 
 # Read the estimated beta_t average series for the period from 2023-08-10 to 2023-10-28
 df.y_all <- read.csv( file=input.betas.path, header=TRUE )
@@ -51,24 +58,34 @@ colnames( df.y_all ) <- c( "time_0", "beta" )
 
 # Read the covariate series for the period from 2023-08-10 to 2023-10-28
 df.z_all <- read.csv( file=input.covariates.path, header=TRUE )
-colnames( df.z_all ) <- c( "time_0", "date", "mean_temp", "max_rel_humidity",
-                           "sun_duration", "wind_speed", "swave_radiation", "google_search" )
-
+#colnames( df.z_all ) <- c( "time_0", "date", "mean_temp", "max_rel_humidity",
+#                           "sun_duration", "wind_speed", "radiation" )
+print(colnames(df.y_all))
+print(colnames(df.z_all))
 # Merge the two data frames
 df.yz_all <- merge( df.y_all, df.z_all ) |>
                 mutate( time_1 = time_0 + 1 ) |>    # [CAUTION] time_1 starts at 1 instead of 0
-                mutate( sun_durn = sun_durn/1000 ) |>
-                select( time_1, date, beta, mean_temp, precip_hours, max_rel_humidity,
-                        sun_durn, wind_speed, swave_radiat, google_search )
+                mutate( sun_duration = sun_duration/1000 ) |>
+                select( time_1, date, beta, mean_temp, max_rel_humidity,
+                        sun_duration, wind_speed, radiation )
 head( df.yz_all )
 
+# Extract beta_t and its predictors
+df.yz_ini <- df.yz_all |>
+             select( beta, mean_temp, max_rel_humidity,
+                     sun_duration, wind_speed, radiation )
+
+# Transform some predictors
+df.yz_fin <- df.yz_ini
+log_print("Data loaded.")
+log_print(df.yz_fin)
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 1-3: Determine a target beta_t series for the t_bgn:t_end period
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Set up a time period
 t_bgn <- 1                                          # first day
-t_end <- 80                                         # last day
+t_end <- nrow(df.yz_all)                            # dynamically set last day
 n_fct <- 28                                         # number of days for forecasting
 
 t_prd <- t_bgn:t_end                 # which( t_bgn <= df.yz_all$time_1 & df.yz_all$time_1 <= t_end )
@@ -81,8 +98,8 @@ b.t <- ts( df.yz_fin$beta[ t_prd ], start=t_bgn, frequency=1 )
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Compute logit(beta.t) with minimum and maximum values of beta.t
-b.t_min <- 0.08                                     # mean(b.t)-6*sd(b.t)=0.0785; mean(b.t)-5*sd(b.t)=0.0854
-b.t_max <- 0.16                                     # mean(b.t)+6*sd(b.t)=0.1612; mean(b.t)+5*sd(b.t)=0.1543
+b.t_min <- 0.01                                     # mean(b.t)-6*sd(b.t)=0.0785; mean(b.t)-5*sd(b.t)=0.0854
+b.t_max <- 0.36                                    # mean(b.t)+6*sd(b.t)=0.1612; mean(b.t)+5*sd(b.t)=0.1543
 
 lb.t <- log( (b.t - b.t_min)/(b.t_max - b.t) )      # generalized logit with b.t_min as min and b.t_max as max
 
@@ -92,14 +109,14 @@ lb.t <- log( (b.t - b.t_min)/(b.t_max - b.t) )      # generalized logit with b.t
 
 # Create a data set for covariate series
 z.t_all <- df.yz_fin[t_prd,] |>
-              select( mean_temp, ln.precip_hours, max_rel_humidity,
-                      sun_durn, wind_speed, swave_radiat, ln.google_search ) |>
+              select( mean_temp, max_rel_humidity,
+                      sun_duration, wind_speed, radiation ) |>
               ts( start=t_bgn, frequency=1 )
 
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 2-1: Define the procedures required for changepoint random forests
 #*[-----------------------------------------------------------------------------------------------]*#
-
+log_print("Beginning Step 2-1.")
 # Load the R code for GA changepoint detection with changepoint + AR(1) model and GA
 source( file=func.lib.path )
 
@@ -181,7 +198,7 @@ beta_forecast <- function( y, z=NULL, trd.type=c("mean","linear","quadratic","cu
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 2-2: Ensemble forecast via changepoint random forests
 #*[-----------------------------------------------------------------------------------------------]*#
-
+log_print("Beginning Step 2-2.")
 # References
 # [1] Forecasting: Principles and Practice
 #     https://otexts.com/fpp3/bootstrap.html (3rd edn); https://otexts.com/fpp2/bootstrap.html (2nd edn)
@@ -190,7 +207,7 @@ beta_forecast <- function( y, z=NULL, trd.type=c("mean","linear","quadratic","cu
 #     International Journal of Forecasting, 32, 303-312.
 
 # Define random forests settings
-n_boot <- 600                                        # number of bootstrap samples
+n_boot <- 3                                        # number of bootstrap samples
 n_xprd <- ceiling( sqrt( ncol(z.t_all) ) )           # number of predictors selected for each tree
 i_seed <- 21                                         # seed number for GA
 
@@ -207,26 +224,37 @@ dim( boot_sample )                                   # [1] 80 n_boot
 # --------------------------------------------------------------------------------
 # Ensemble forecast via changepoint random forests using multiple cores
 # --------------------------------------------------------------------------------
+log_print("Beginning Ensemble Forecast.")
+
 # Load required packages for parallel computing
 library( doParallel )                           # load doParallel with foreach, iterators, parallel
 library( doSNOW )
 
 # Set up parallel backend to use multiple cores
 cores <- detectCores()                          # [1] 8 on MacBook Air M2
-cl <- makeCluster( cores-2 )                    # use 5 cores, makeCluster( cores-2 )
+cl <- makeCluster( cores-3 )                    # use 5 cores, makeCluster( cores-3 )
 registerDoSNOW( cl )                            # registerDoParallel( cl ) if doSNOW is not used
+
+log_print(paste("Parallel cluster created with DoSNOW.", cores, "cores detected."), quote=FALSE)
 
 # Make a progress status bar
 pb <- txtProgressBar( max=n_boot, style=3 )
-progress <- function( n ) setTxtProgressBar( pb, n )
+progress <- function( n ) {
+    setTxtProgressBar( pb, n )
+    }
 opts <- list( progress=progress )
 
+test <- foreach( i_boot=1:n_boot, .options.snow=opts ) %dopar% {
+    print('test')
+}
+log_print('Parallel test completed.')
+
 # Record run time
-print( paste( "#-----[ Changepoint random forests have begun at",Sys.time(),"]-----#" ), quote=FALSE )
+log_print( paste( "#-----[ Changepoint random forests have begun at",Sys.time(),"]-----#" ), quote=FALSE )
 
 # Perform changepoint random forests on lb.t using multiple cores
 set.seed( 102 + i_seed )
-ls.rf_out <- foreach( i_boot=1:n_boot, .packages='forecast', .options.snow=opts ) %dopar% {
+ls.rf_out <- foreach( i_boot=1:n_boot, .packages=c('forecast'), .options.snow=opts ) %dopar% {
    y_boot = boot_sample[,i_boot]                # moving-block bootstrap samlple
    z_indx = sort( sample( 1:ncol(z.t_all), size=n_xprd, replace=FALSE ) )  # index for selected predictors
    z_boot = z.t_all[,z_indx]                    # selected predictors
@@ -244,7 +272,7 @@ ls.rf_out <- foreach( i_boot=1:n_boot, .packages='forecast', .options.snow=opts 
 }
 
 # Record run time
-print( paste( "#-----[ Changepoint random forests have ended at",Sys.time(),"]-----#" ), quote=FALSE )
+log_print( paste( "#-----[ Changepoint random forests have ended at",Sys.time(),"]-----#" ), quote=FALSE )
 
 # End parallel backend
 close( pb )
@@ -284,13 +312,17 @@ ens_f95 <- structure( list(
              level = 0.95),
            class = "forecast" )
 
-dev.new( width=11, height=4 )
-autoplot( b.t ) +
-   autolayer( ens_f95, series="95% PI" ) +
-   autolayer( b.t, col=TRUE, linewidth=0.5, series="PF b.t" ) +
-   ylab( "Transmission rates" ) +
-   xlab( "Number of days from 2023-08-10 (Day 1)" ) +
-   guides( col=guide_legend( title="Forecasts") ) +
-   theme_bw()
+# Create the plot
+plot <- autoplot(b.t) +
+  autolayer(ens_f95, series = "95% PI") +
+  autolayer(b.t, col = TRUE, linewidth = 0.5, series = "PF b.t") +
+  ylab("Transmission rates") +
+  xlab("Number of days from 2023-08-10 (Day 1)") +
+  guides(col = guide_legend(title = "Forecasts")) +
+  theme_bw()
+
+# Save the plot as PNG
+ggsave(output.path, plot, width = 11, height = 4, units = "in", dpi = 300)
+
 
 

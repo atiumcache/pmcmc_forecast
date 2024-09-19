@@ -65,11 +65,15 @@ def get_covariate_data(
 
 def output_covariates_to_csv(
     covariate_data: pd.DataFrame, loc_code: str, target_date: str
-) -> None:
+) -> str:
     """
     Outputs a covariate dataframe into a CSV file.
+
+    Returns:
+        An absolute file path to the covariate CSV file.
     """
     file_dir = os.path.join(paths.OUTPUT_DIR, "covariates", loc_code)
     os.makedirs(file_dir, exist_ok=True)
     file_path = os.path.join(file_dir, f"{target_date}.csv")
     covariate_data.to_csv(file_path, index=False)
+    return file_path

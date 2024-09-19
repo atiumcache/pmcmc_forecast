@@ -8,9 +8,11 @@ from numpy import array as np_array
 from numpy import savetxt as np_savetxt
 
 from src import paths
-from src.trend_forecast.covariates import (CovariateSelection,
-                                           get_covariate_data,
-                                           output_covariates_to_csv)
+from src.trend_forecast.covariates import (
+    CovariateSelection,
+    get_covariate_data,
+    output_covariates_to_csv,
+)
 
 selected_covariates = CovariateSelection(
     mean_temp=True,
@@ -50,7 +52,9 @@ def main(beta_estimates: Array, loc_code: str, target_date: str) -> Array:
         covariate_data=covariate_df, loc_code=loc_code, target_date=target_date
     )
 
-    forecast_file_path = run_r_subprocess(loc_code, target_date, beta_estimates_path)
+    forecast_file_path = run_r_subprocess(
+        loc_code, target_date, beta_estimates_path, covariates_path
+    )
 
     beta_forecast = load_beta_forecast(forecast_file_path)
     return beta_forecast
@@ -81,7 +85,9 @@ def beta_estimates_to_csv(
     return output_file_path
 
 
-def run_r_subprocess(loc_code: str, target_date: str, beta_estimates_path: str) -> str:
+def run_r_subprocess(
+    loc_code: str, target_date: str, beta_estimates_path: str, covariates_path: str
+) -> str:
     """
     The current iteration of the R script (as of Sep 7, 2024)
     expects 4 command line args:
@@ -98,25 +104,30 @@ def run_r_subprocess(loc_code: str, target_date: str, beta_estimates_path: str) 
         the forecasted beta values from the R script.
     """
     input_betas_path = beta_estimates_path
-    input_covariates_path = ""
+    input_covariates_path = covariates_path
     func_lib_path = path.join(paths.TREND_FORECAST_DIR, "helper_functions.R")
     output_path = path.join(
         paths.TREND_OUTPUT_DIR, target_date, f"{loc_code}_beta_forecast.csv"
     )
     main_script_path = path.join(paths.TREND_FORECAST_DIR, "trend_forecast.R")
+    cmd = [
+        "Rscript",
+        main_script_path,
+        input_betas_path,
+        input_covariates_path,
+        func_lib_path,
+        output_path,
+    ]
 
-    subprocess.run(
-        [
-            "Rscript",
-            main_script_path,
-            input_betas_path,
-            input_covariates_path,
-            func_lib_path,
-            output_path,
-        ],
-        capture_output=True,
-        text=True,
-    )
+    # Run the R subprocess and capture the output in real time
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+    # Read the output and error streams as they are generated
+    for stdout_line in iter(process.stdout.readline, ""):
+        print(stdout_line, end="")  # Print R output to Python console
+    for stderr_line in iter(process.stderr.readline, ""):
+        print(stderr_line, end="")  # Print R errors to Python console
+
     return output_path
 
 
@@ -136,7 +147,12 @@ def load_beta_forecast(beta_forecast_file_path: str) -> Array:
 
 
 # Used for testing, or manual operation:
-if __name__ == '__main__':
-    run_r_subprocess(loc_code='04',
-                     target_date='2023-10-28',
-                     )
+if __name__ == "__main__":
+    run_r_subprocess(
+        loc_code="06",
+        target_date="2023-10-28",
+        beta_estimates_path=path.join(paths.PF_OUTPUT_DIR, "2023-10-28", "06.csv"),
+        covariates_path=path.join(
+            paths.OUTPUT_DIR, "covariates", "06", "2023-10-28.csv"
+        ),
+    )
