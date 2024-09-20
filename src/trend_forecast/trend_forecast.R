@@ -29,7 +29,7 @@ print(WD)
 print(date_string)
 
 # Load required packages
-.libPaths("/scratch/apa235/R_packages")
+# .libPaths("/scratch/apa235/R_packages")
 
 if(!require(dplyr)){
     install.packages("dplyr", lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
@@ -243,9 +243,12 @@ library( doSNOW )
 
 # Set up parallel backend to use multiple cores
 cores <- detectCores()                          # [1] 8 on MacBook Air M2
-cl <- makeCluster( cores-4, outfile="")                    # use 5 cores, makeCluster( cores-3 )
+cl <- makeCluster( cores-3, outfile="")                    # use 5 cores, makeCluster( cores-3 )
 registerDoSNOW( cl )                            # registerDoParallel( cl ) if doSNOW is not used
-clusterEvalQ(cl, .libPaths('/scratch/apa235/R_packages'))
+clusterEvalQ(cl, {
+  library(forecast)
+  library(dplyr)
+})
 
 log_print(paste("Parallel cluster created with DoSNOW.", cores, "cores detected."), quote=FALSE)
 
@@ -256,34 +259,31 @@ progress <- function( n ) {
     }
 opts <- list( progress=progress )
 
-test <- foreach( i_boot=1:5, .options.snow=opts, .packages=c('forecast', 'dplyr') ) %dopar% {
-    print('test')
-}
-log_print('Parallel test completed.')
-
 # Record run time
 log_print( paste( "#-----[ Changepoint random forests have begun at",Sys.time(),"]-----#" ), quote=FALSE )
 
 # Perform changepoint random forests on lb.t using multiple cores
 set.seed( 102 + i_seed )
-ls.rf_out <- foreach( i_boot=1:n_boot, .options.snow=opts) %dopar% {
-    library(forecast)
-    library(dplyr)
-   y_boot = boot_sample[,i_boot]                # moving-block bootstrap samlple
-   z_indx = sort( sample( 1:ncol(z.t_all), size=n_xprd, replace=FALSE ) )  # index for selected predictors
-   z_boot = z.t_all[,z_indx]                    # selected predictors
+ls.rf_out <- foreach(i_boot=1:n_boot, .options.snow=opts) %dopar% {
+  tryCatch({
+    print(i_boot)
+    y_boot <- boot_sample[,i_boot]
+    z_indx <- sort(sample(1:ncol(z.t_all), size=n_xprd, replace=FALSE))
+    z_boot <- z.t_all[,z_indx]
+    fct_out <- beta_forecast(y=y_boot, z=z_boot, trd.type="mean", ic="MDL", h=n_fct, i=i_seed+10*(i_boot-1))
 
-   fct_out = beta_forecast( y=y_boot, z=z_boot, trd.type="mean", ic="MDL", h=n_fct, i=i_seed+10*(i_boot-1) )
+    boot_cpt <- fct_out$ga.cpt
+    boot_val <- fct_out$ga.val
+    boot_fct <- fct_out$y_fct
 
-   boot_cpt = fct_out$ga.cpt                    # GA estimated changepoints (m; tau_1,...,tau_m)
-   boot_val = fct_out$ga.val                    # optimized value of penalized likelihood
-
-#  boot_trd = fct_out$y_trd
-#  boot_prd = fct_out$y_prd
-   boot_fct = fct_out$y_fct                     # forecasts
-
-   list( boot_ID=i_boot, boot_cpt=boot_cpt, boot_val=boot_val, boot_fct=boot_fct )
+    list(boot_ID=i_boot, boot_cpt=boot_cpt, boot_val=boot_val, boot_fct=boot_fct)
+  }, error=function(e) {
+    cat("Error in iteration", i_boot, ":\n")
+    print(e)
+    NULL  # Returning NULL to handle the error gracefully
+  })
 }
+
 
 # Record run time
 log_print( paste( "#-----[ Changepoint random forests have ended at",Sys.time(),"]-----#" ), quote=FALSE )

@@ -181,7 +181,7 @@ def get_radiation(loc_code: str, target_date: str, series_length: int) -> Series
         A list of solar radiation values for the given location and date.
     """
     return get_daily_weather_data(
-        loc_code, target_date, "wind_speed_10m_max", series_length
+        loc_code, target_date, "shortwave_radiation_sum", series_length
     )
 
 

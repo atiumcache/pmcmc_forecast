@@ -204,4 +204,5 @@ def parallel_test():
 
 # Used for testing, or manual operation:
 if __name__ == "__main__":
-    parallel_test()
+    target_dates = ["2023-12-02", "2023-12-09", "2023-12-16", "2023-12-23"]
+    process_dates(target_dates)

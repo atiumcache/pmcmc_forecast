@@ -8,7 +8,7 @@
 #SBATCH --cpus-per-task=64
 #SBATCH --mincpus=64
 #SBATCH --time=12:00:00
-#SBATCH --mem-per-cpu=5GB
+#SBATCH --mem=64G
 #SBATCH --chdir=/projects/math_cheny/pmcmc_tests_andrew/trend_forecast_test/
 
 # added echo statements for debugging
