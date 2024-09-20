@@ -22,7 +22,7 @@ WD.inp <- WD
 setwd(WD)
 
 # Load required packages
-# .libPaths("/scratch/apa235/R_packages")
+.libPaths("/scratch/apa235/R_packages")
 
 if(!require(dplyr)){
     install.packages("dplyr", lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
