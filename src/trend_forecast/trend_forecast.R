@@ -78,13 +78,13 @@ df.yz_all <- merge( df.y_all, df.z_all ) |>
                 mutate( time_1 = time_0 + 1 ) |>    # [CAUTION] time_1 starts at 1 instead of 0
                 mutate( sun_duration = sun_duration/1000 ) |>
                 select( time_1, date, beta, mean_temp, max_rel_humidity,
-                        sun_duration, wind_speed, radiation )
+                        sun_duration, wind_speed, swave_radiation )
 head( df.yz_all )
 
 # Extract beta_t and its predictors
 df.yz_ini <- df.yz_all |>
              select( beta, mean_temp, max_rel_humidity,
-                     sun_duration, wind_speed, radiation )
+                     sun_duration, wind_speed, swave_radiation )
 
 # Transform some predictors
 df.yz_fin <- df.yz_ini
@@ -121,7 +121,7 @@ lb.t <- log( (b.t - b.t_min)/(b.t_max - b.t) )      # generalized logit with b.t
 # Create a data set for covariate series
 z.t_all <- df.yz_fin[t_prd,] |>
               select( mean_temp, max_rel_humidity,
-                      sun_duration, wind_speed, radiation ) |>
+                      sun_duration, wind_speed, swave_radiation ) |>
               ts( start=t_bgn, frequency=1 )
 
 #*[-----------------------------------------------------------------------------------------------]*#
