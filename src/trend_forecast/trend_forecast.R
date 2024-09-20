@@ -243,7 +243,7 @@ library( doSNOW )
 
 # Set up parallel backend to use multiple cores
 cores <- detectCores()                          # [1] 8 on MacBook Air M2
-cl <- makeCluster( cores-2 )                    # use 5 cores, makeCluster( cores-3 )
+cl <- makeCluster( cores-4, outfile="")                    # use 5 cores, makeCluster( cores-3 )
 registerDoSNOW( cl )                            # registerDoParallel( cl ) if doSNOW is not used
 clusterEvalQ(cl, .libPaths('/scratch/apa235/R_packages'))
 
@@ -266,8 +266,9 @@ log_print( paste( "#-----[ Changepoint random forests have begun at",Sys.time(),
 
 # Perform changepoint random forests on lb.t using multiple cores
 set.seed( 102 + i_seed )
-ls.rf_out <- foreach( i_boot=1:n_boot, .packages=c('forecast', 'dplyr'), .options.snow=opts,
-                      .export = c('boot_sample', 'z.t_all', 'n_xprd', 'beta_forecast', 'n_fct', 'i_seed') ) %dopar% {
+ls.rf_out <- foreach( i_boot=1:n_boot, .options.snow=opts) %dopar% {
+    library(forecast)
+    library(dplyr)
    y_boot = boot_sample[,i_boot]                # moving-block bootstrap samlple
    z_indx = sort( sample( 1:ncol(z.t_all), size=n_xprd, replace=FALSE ) )  # index for selected predictors
    z_boot = z.t_all[,z_indx]                    # selected predictors
