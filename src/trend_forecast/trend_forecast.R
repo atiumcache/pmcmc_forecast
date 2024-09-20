@@ -21,6 +21,13 @@ date_string <- args[6]
 WD.inp <- WD
 setwd(WD)
 
+print(input.betas.path)
+print(input.covariates.path)
+print(func.lib.path)
+print(output.path)
+print(WD)
+print(date_string)
+
 # Load required packages
 .libPaths("/scratch/apa235/R_packages")
 
