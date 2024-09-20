@@ -29,11 +29,6 @@ if(!require(dplyr)){
     library(dplyr)
 }
 
-if(!require(glue)){
-    install.packages("glue", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
-    library(glue)
-}
-
 if(!require(forecast)){
     install.packages("forecast", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
     library(forecast)
