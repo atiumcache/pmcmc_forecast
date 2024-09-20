@@ -96,7 +96,7 @@ log_print(df.yz_fin)
 
 # Set up a time period
 t_bgn <- 1                                          # first day
-t_end <- nrow(df.yz_all)                            # dynamically set last day
+t_end <- nrow(df.yz_fin)                            # dynamically set last day
 n_fct <- 28                                         # number of days for forecasting
 
 t_prd <- t_bgn:t_end                 # which( t_bgn <= df.yz_all$time_1 & df.yz_all$time_1 <= t_end )
@@ -255,7 +255,7 @@ progress <- function( n ) {
     }
 opts <- list( progress=progress )
 
-test <- foreach( i_boot=1:n_boot, .options.snow=opts ) %dopar% {
+test <- foreach( i_boot=1:5, .options.snow=opts, .packages=c('forecast', 'dplyr') ) %dopar% {
     print('test')
 }
 log_print('Parallel test completed.')
@@ -265,7 +265,8 @@ log_print( paste( "#-----[ Changepoint random forests have begun at",Sys.time(),
 
 # Perform changepoint random forests on lb.t using multiple cores
 set.seed( 102 + i_seed )
-ls.rf_out <- foreach( i_boot=1:n_boot, .packages=c('forecast'), .options.snow=opts ) %dopar% {
+ls.rf_out <- foreach( i_boot=1:n_boot, .packages=c('forecast', 'dplyr'), .options.snow=opts,
+                      .export = c('boot_sample', 'z.t_all', 'n_xprd', 'beta_forecast', 'n_fct', 'i_seed') ) %dopar% {
    y_boot = boot_sample[,i_boot]                # moving-block bootstrap samlple
    z_indx = sort( sample( 1:ncol(z.t_all), size=n_xprd, replace=FALSE ) )  # index for selected predictors
    z_boot = z.t_all[,z_indx]                    # selected predictors
