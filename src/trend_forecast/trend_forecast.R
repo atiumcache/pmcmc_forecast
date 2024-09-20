@@ -71,8 +71,8 @@ colnames( df.y_all ) <- c( "time_0", "beta" )
 df.z_all <- read.csv( file=input.covariates.path, header=TRUE )
 #colnames( df.z_all ) <- c( "time_0", "date", "mean_temp", "max_rel_humidity",
 #                           "sun_duration", "wind_speed", "radiation" )
-print(colnames(df.y_all))
-print(colnames(df.z_all))
+log_print(colnames(df.y_all))
+log_print(colnames(df.z_all))
 # Merge the two data frames
 df.yz_all <- merge( df.y_all, df.z_all ) |>
                 mutate( time_1 = time_0 + 1 ) |>    # [CAUTION] time_1 starts at 1 instead of 0
