@@ -77,7 +77,7 @@ log_print(colnames(df.z_all))
 df.yz_all <- merge( df.y_all, df.z_all ) |>
                 mutate( time_1 = time_0 + 1 ) |>    # [CAUTION] time_1 starts at 1 instead of 0
                 mutate( sun_duration = sun_duration/1000 ) |>
-                select( time_1, date, beta, mean_temp, max_rel_humidity,
+                select( time_1, beta, mean_temp, max_rel_humidity,
                         sun_duration, wind_speed, swave_radiation )
 head( df.yz_all )
 
