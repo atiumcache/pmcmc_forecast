@@ -245,6 +245,7 @@ library( doSNOW )
 cores <- detectCores()                          # [1] 8 on MacBook Air M2
 cl <- makeCluster( cores-2 )                    # use 5 cores, makeCluster( cores-3 )
 registerDoSNOW( cl )                            # registerDoParallel( cl ) if doSNOW is not used
+clusterEvalQ(cl, .libPaths('/scratch/apa235/R_packages')
 
 log_print(paste("Parallel cluster created with DoSNOW.", cores, "cores detected."), quote=FALSE)
 
