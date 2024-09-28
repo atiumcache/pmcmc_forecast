@@ -5,8 +5,8 @@
 #SBATCH --error=beta_forecast_%j.err
 #SBATCH --nodes=4
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=60
-#SBATCH --time=18:00:00
+#SBATCH --cpus-per-task=28
+#SBATCH --time=22:00:00
 #SBATCH --chdir=/projects/math_cheny/pmcmc_tests_andrew/trend_forecast_test/
 
 # added echo statements for debugging
