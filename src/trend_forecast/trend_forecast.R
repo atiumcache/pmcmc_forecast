@@ -29,8 +29,11 @@ print(output.path)
 print(WD)
 print(date_string)
 
+# Begin memory profiling
+Rprofmem("memory_profile.out")
+
 # Load required packages
-#.libPaths("/scratch/apa235/R_packages")
+.libPaths("/scratch/apa235/R_packages")
 
 package_list <- c('dplyr', 'forecast', 'logr', 'doSNOW', 'doParallel', 'ggplot2')
 
@@ -80,6 +83,7 @@ df.yz_ini <- df.yz_all |>
 df.yz_fin <- df.yz_ini
 log_print("Data loaded.")
 log_print(df.yz_fin)
+
 log_print("\n-----------CORRELATION-----------")
 log_print(cor(df.yz_fin))
 #*[-----------------------------------------------------------------------------------------------]*#
@@ -212,7 +216,7 @@ log_print("Beginning Step 2-2.")
 # Define random forests settings
 n_boot <- 400                                        # number of bootstrap samples
 n_xprd <- ceiling( sqrt( ncol(z.t_all) ) )           # number of predictors selected for each tree
-i_seed <- as.integer(loc_code)                                         # seed number for GA
+i_seed <- as.integer(loc_code)                       # seed number for GA
 
 # Generate bootstrap samples
 #     The procedure is described in Bergmeir et al. (2016):
@@ -360,3 +364,6 @@ autoplot( b.t ) +
    ggtitle( paste("Ensemble Forecast", date_string, loc_code, sep=" | ")
 
 dev.off()
+
+# End memory profiling
+Rprofmem(NULL)
