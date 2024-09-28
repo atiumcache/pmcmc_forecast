@@ -29,9 +29,6 @@ print(output.path)
 print(WD)
 print(date_string)
 
-# Begin memory profiling
-Rprofmem("memory_profile.out")
-
 # Load required packages
 .libPaths("/scratch/apa235/R_packages")
 
@@ -364,6 +361,3 @@ autoplot( b.t ) +
    ggtitle( paste("Ensemble Forecast", date_string, loc_code, sep=" | ")
 
 dev.off()
-
-# End memory profiling
-Rprofmem(NULL)
