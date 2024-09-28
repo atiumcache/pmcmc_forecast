@@ -8,3 +8,7 @@ tqdm==4.66.4
 toml==0.10.2
 
 requests~=2.32.3
+
+seaborn~=0.13.2
+pytrends~=4.9.2
+Flask~=3.0.3

@@ -73,23 +73,25 @@ df.z_all <- read.csv( file=input.covariates.path, header=TRUE )
 #                           "sun_duration", "wind_speed", "radiation" )
 log_print(colnames(df.y_all))
 log_print(colnames(df.z_all))
+
 # Merge the two data frames
 df.yz_all <- merge( df.y_all, df.z_all ) |>
                 mutate( time_1 = time_0 + 1 ) |>    # [CAUTION] time_1 starts at 1 instead of 0
                 mutate( sun_duration = sun_duration/1000 ) |>
                 select( time_1, beta, mean_temp, max_rel_humidity,
-                        sun_duration, wind_speed, swave_radiation )
+                        sun_duration, wind_speed, swave_radiation, google_search )
 head( df.yz_all )
 
 # Extract beta_t and its predictors
 df.yz_ini <- df.yz_all |>
              select( beta, mean_temp, max_rel_humidity,
-                     sun_duration, wind_speed, swave_radiation )
+                     sun_duration, wind_speed, swave_radiation, google_search )
 
 # Transform some predictors
 df.yz_fin <- df.yz_ini
 log_print("Data loaded.")
 log_print(df.yz_fin)
+log_print(cor(df.yz_fin))
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 1-3: Determine a target beta_t series for the t_bgn:t_end period
 #*[-----------------------------------------------------------------------------------------------]*#
@@ -218,7 +220,7 @@ log_print("Beginning Step 2-2.")
 #     International Journal of Forecasting, 32, 303-312.
 
 # Define random forests settings
-n_boot <- 500                                        # number of bootstrap samples
+n_boot <- 400                                        # number of bootstrap samples
 n_xprd <- ceiling( sqrt( ncol(z.t_all) ) )           # number of predictors selected for each tree
 i_seed <- 21                                         # seed number for GA
 
@@ -243,7 +245,7 @@ library( doSNOW )
 
 # Set up parallel backend to use multiple cores
 cores <- detectCores()                          # [1] 8 on MacBook Air M2
-cl <- makeCluster( cores-4, outfile="")                    # use 5 cores, makeCluster( cores-3 )
+cl <- makeCluster( cores-2, outfile="")
 registerDoSNOW( cl )                            # registerDoParallel( cl ) if doSNOW is not used
 clusterEvalQ(cl, .libPaths('/scratch/apa235/R_packages'))
 

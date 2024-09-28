@@ -10,6 +10,7 @@ from typing import Tuple
 import pandas as pd
 import requests
 from pandas import Series
+from pytrends.request import TrendReq
 
 from src import paths
 
@@ -25,6 +26,31 @@ def get_lat_long(loc_code: str) -> Tuple[float, float]:
     lat = df["latitude"].loc[df["location"] == loc_code].values[0]
     long = df["longitude"].loc[df["location"] == loc_code].values[0]
     return lat, long
+
+
+def get_start_end_dates(target_date: str, series_length: int, lag: int = 0) -> Tuple[str, str]:
+    """
+    Calculates start and end dates for a time series.
+
+    Args:
+        target_date: The day we will forecast from. If lag == 0, this
+            is the final day of the time series.
+        series_length: number of days in the time series.
+        lag: Number of days to shift the time series by. A positive number x
+            will shift the time series x days into the past. Default is 0.
+
+    Returns:
+         A tuple containing the start and end dates for the specified series.
+    """
+    target_date_dt = datetime.strptime(target_date, "%Y-%m-%d") - timedelta(days=lag)
+
+    # Calculate the start date
+    start_date_dt = target_date_dt - timedelta(days=(series_length - 1))
+
+    # Format dates as strings in ISO 8601 format
+    start_date = start_date_dt.strftime("%Y-%m-%d")
+    end_date = target_date_dt.strftime("%Y-%m-%d")
+    return start_date, end_date
 
 
 def get_daily_weather_data(
@@ -50,15 +76,7 @@ def get_daily_weather_data(
     # Get latitude and longitude from loc_code
     latitude, longitude = get_lat_long(loc_code)
 
-    # Convert target_date string to datetime object
-    target_date_dt = datetime.strptime(target_date, "%Y-%m-%d")
-
-    # Calculate the start date (80 days before target_date)
-    start_date_dt = target_date_dt - timedelta(days=(series_length - 1))
-
-    # Format dates as strings in ISO 8601 format
-    start_date = start_date_dt.strftime("%Y-%m-%d")
-    end_date = target_date_dt.strftime("%Y-%m-%d")
+    start_date, end_date = get_start_end_dates(target_date, series_length)
 
     # Open Meteo API request URL for the specified weather variable
     api_url = (
@@ -185,19 +203,59 @@ def get_radiation(loc_code: str, target_date: str, series_length: int) -> Series
     )
 
 
-def get_google_search(loc_code: str, target_date: str, series_length: int) -> list:
+def convert_loc_code_to_abbrev(loc_code: str) -> str:
+    """
+    Given a 2-digit location code, returns the 2-letter abbreviation.
+    i.e. for Arizona, we have '04' -> 'AZ'
+    """
+    locations_csv_path = path.join(paths.DATASETS_DIR, "locations.csv")
+    locations_df = pd.read_csv(locations_csv_path)
+    loc_abbrev = locations_df.loc[
+        locations_df["location"] == loc_code, "abbreviation"
+    ].values[0]
+    return loc_abbrev
+
+
+def get_google_search(loc_code: str, search_term: str, target_date: str, series_length: int) -> pd.DataFrame:
     """
     Retrieves Google search trend data for a specific location and date.
 
     Args:
         loc_code: A 2-digit string representing the location code.
+        search_term: Search term to get trend data for. 
         target_date: An ISO 8601 formatted date string (YYYY-MM-DD).
         series_length: Number of days prior to target date.
 
     Returns:
-        A list of Google search trend scores for the given location and date.
+        A time series (list) of Google search trend scores for the given location.
+        Time series ends at target_date, and begins series_length days earlier. 
     """
-    raise NotImplementedError("get_google_search is not yet implemented.")
+    pytrends = TrendReq(hl="en-US", tz=360)
+
+    loc_abbrev = convert_loc_code_to_abbrev(loc_code)
+
+    start_date, end_date = get_start_end_dates(target_date=target_date,
+                                               series_length=series_length,
+                                               lag=3)
+
+    kw_list = [search_term]
+    pytrends.build_payload(
+        kw_list,
+        cat=0,
+        timeframe=f"{start_date} {end_date}",
+        geo=f"US-{loc_abbrev}",
+        gprop="",
+    )
+
+    data = pytrends.interest_over_time()
+
+    if not data.empty:
+        data = data.drop(columns=["isPartial"])
+        return data
+    else:
+        raise ValueError(
+            f"Google Trends data failed for {loc_code} from {start_date} to {end_date}."
+        )
 
 
 def get_movement_data(loc_code: str, target_date: str, series_length: int) -> list:
