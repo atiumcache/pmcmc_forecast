@@ -6,7 +6,8 @@
 #SBATCH --nodes=4
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=28
-#SBATCH --time=22:00:00
+#SBATCH --time=24:00:00
+#SBATCH --mem=128GB
 #SBATCH --chdir=/projects/math_cheny/pmcmc_tests_andrew/trend_forecast_test/
 
 # added echo statements for debugging

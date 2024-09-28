@@ -249,11 +249,6 @@ progress <- function( n ) {
     }
 opts <- list( progress=progress )
 
-test <- foreach( i_boot=1:5, .options.snow=opts, .packages=c('forecast', 'dplyr') ) %dopar% {
-    print('test')
-}
-log_print('Parallel test completed.')
-
 # Record run time
 log_print( paste( "#-----[ Changepoint random forests have begun at",Sys.time(),"]-----#" ), quote=FALSE )
 
