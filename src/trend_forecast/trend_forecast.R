@@ -212,7 +212,7 @@ log_print("Beginning Step 2-2.")
 # Define random forests settings
 n_boot <- 400                                        # number of bootstrap samples
 n_xprd <- ceiling( sqrt( ncol(z.t_all) ) )           # number of predictors selected for each tree
-i_seed <- 21                                         # seed number for GA
+i_seed <- as.integer(loc_code)                                         # seed number for GA
 
 # Generate bootstrap samples
 #     The procedure is described in Bergmeir et al. (2016):
