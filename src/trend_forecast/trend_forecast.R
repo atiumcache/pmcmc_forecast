@@ -17,6 +17,7 @@ func.lib.path <- args[3]  # R script containing helper functions
 output.path <- args[4]  # absolute path to output the bootstrapped forecasts
 WD <- args[5]
 date_string <- args[6]
+loc_code <- args[7]
 
 WD.inp <- WD
 setwd(WD)
@@ -29,31 +30,19 @@ print(WD)
 print(date_string)
 
 # Load required packages
-.libPaths("/scratch/apa235/R_packages")
+#.libPaths("/scratch/apa235/R_packages")
 
-if(!require(dplyr)){
-    install.packages("dplyr", lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
-    library(dplyr)
-}
+package_list <- c('dplyr', 'forecast', 'logr', 'doSNOW', 'doParallel', 'ggplot2')
 
-if(!require(forecast)){
-    install.packages("forecast", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
-    library(forecast)
-}
-
-if(!require(logr)){
-    install.packages("logr", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
-    library(logr)
-}
-
-if(!require(doSNOW)){
-    install.packages("doSNOW", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
-    library(doSNOW)
-}
-
-if(!require(doParallel)){
-    install.packages("doParallel", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
-    library(doParallel)
+# Loop through the package list
+for (pkg in package_list) {
+    # Check if the package is already installed
+    if (!require(pkg, character.only = TRUE)) {
+        # If not, install it in the specified library
+        install.packages(pkg, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+        # Load the package after installation
+        library(pkg, character.only = TRUE)
+    }
 }
 
 #*[-----------------------------------------------------------------------------------------------]*#
@@ -91,6 +80,7 @@ df.yz_ini <- df.yz_all |>
 df.yz_fin <- df.yz_ini
 log_print("Data loaded.")
 log_print(df.yz_fin)
+log_print("\n-----------CORRELATION-----------")
 log_print(cor(df.yz_fin))
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 1-3: Determine a target beta_t series for the t_bgn:t_end period
@@ -341,4 +331,32 @@ forecast_df <- data.frame(
 write.csv(forecast_df, "ensemble_forecast.csv", row.names = FALSE)
 
 
+#---------------------------------------------------------------------------
+# Calculate Day 1
+target_date_obj <- as.Date(date_string)
+day_1_obj <- target_date_obj - nrow(df.yz_fin)
 
+# Save all forecasts plot to PNG
+png(filename="forecast_plot.png", width=10.5, height=5, units="in", res=300)
+autoplot( b.t ) +
+   autolayer( b.t_fct.boot[,1:n_boot], col=TRUE ) +
+   autolayer( b.t, col=FALSE ) +
+   ylab( "Transmission rates" ) +
+   xlab( paste("Number of days from", day_1_obj, "(Day 1)" ) +
+   guides( col="none" ) +
+   theme_bw() +
+   ggtitle( paste("Bootstrap Forecasts", date_string, loc_code, sep=" | ")
+dev.off()
+
+# Save ensemble forecast plot to PNG
+png(filename="ensemble_forecast.png", width=10.5, height=5, units="in", res=300)
+autoplot( b.t ) +
+   autolayer( ens_f95, series="95% PI" ) +
+   autolayer( b.t, col=TRUE, linewidth=0.5, series="PF b.t" ) +
+   ylab( "Transmission rates" ) +
+   xlab( paste("Number of days from", day_1_obj, "(Day 1)" ) ) +
+   guides( col=guide_legend( title="Forecasts") ) +
+   theme_bw() +
+   ggtitle( paste("Ensemble Forecast", date_string, loc_code, sep=" | ")
+
+dev.off()

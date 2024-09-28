@@ -90,10 +90,11 @@ def run_r_subprocess(
     loc_code: str, target_date: str, beta_estimates_path: str, covariates_path: str
 ) -> str:
     """
-    The current iteration of the R script (as of Sep 7, 2024)
-    expects 4 command line args:
+    The current iteration of the R script (as of Sep 28, 2024)
+    expects 7 command line args:
         input.betas.path, input.covariates.path,
-        func.lib.path, and output.path
+        func.lib.path, output.path, working_dir,
+        target_date, and loc_code
     They must be provided in this exact order.
 
     These absolute paths are set in this function and passed
@@ -121,6 +122,7 @@ def run_r_subprocess(
         output_path,
         r_working_dir,
         target_date,
+        loc_code
     ]
     # Ensure the directories exist
     makedirs(path.dirname(output_path), exist_ok=True)
