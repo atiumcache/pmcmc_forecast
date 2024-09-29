@@ -28,7 +28,9 @@ def get_lat_long(loc_code: str) -> Tuple[float, float]:
     return lat, long
 
 
-def get_start_end_dates(target_date: str, series_length: int, lag: int = 0) -> Tuple[str, str]:
+def get_start_end_dates(
+    target_date: str, series_length: int, lag: int = 0
+) -> Tuple[str, str]:
     """
     Calculates start and end dates for a time series.
 
@@ -216,27 +218,29 @@ def convert_loc_code_to_abbrev(loc_code: str) -> str:
     return loc_abbrev
 
 
-def get_google_search(loc_code: str, search_term: str, target_date: str, series_length: int) -> pd.DataFrame:
+def get_google_search(
+    loc_code: str, search_term: str, target_date: str, series_length: int
+) -> pd.DataFrame:
     """
     Retrieves Google search trend data for a specific location and date.
 
     Args:
         loc_code: A 2-digit string representing the location code.
-        search_term: Search term to get trend data for. 
+        search_term: Search term to get trend data for.
         target_date: An ISO 8601 formatted date string (YYYY-MM-DD).
         series_length: Number of days prior to target date.
 
     Returns:
         A time series (list) of Google search trend scores for the given location.
-        Time series ends at target_date, and begins series_length days earlier. 
+        Time series ends at target_date, and begins series_length days earlier.
     """
     pytrends = TrendReq(hl="en-US", tz=360)
 
     loc_abbrev = convert_loc_code_to_abbrev(loc_code)
 
-    start_date, end_date = get_start_end_dates(target_date=target_date,
-                                               series_length=series_length,
-                                               lag=3)
+    start_date, end_date = get_start_end_dates(
+        target_date=target_date, series_length=series_length, lag=3
+    )
 
     kw_list = [search_term]
     pytrends.build_payload(

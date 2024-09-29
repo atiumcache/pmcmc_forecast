@@ -122,7 +122,7 @@ def run_r_subprocess(
         output_path,
         r_working_dir,
         target_date,
-        loc_code
+        loc_code,
     ]
     # Ensure the directories exist
     makedirs(path.dirname(output_path), exist_ok=True)
