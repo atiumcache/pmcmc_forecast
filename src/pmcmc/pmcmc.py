@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 import jax.numpy as jnp
 import jax.random as random
 import pytz
-from jax import Array, vmap
+from jax import Array, vmap, pmap
 from jax.numpy.linalg import cholesky
 from jax.typing import ArrayLike
 from tqdm import tqdm
@@ -81,7 +81,7 @@ class PMCMC:
 
         json_dir = path.join(paths.PMCMC_RUNS_DIR, location_info["location_code"])
         os.makedirs(json_dir, exist_ok=True)
-        self.json_out_path = path.join(json_dir, f"{location_info['target_date']}.json")
+        self.json_out_path = path.join(json_dir, f"{location_info['target_date']}-{self.timestamp}-diff{self.diffusion_coeff}.json")
         self.init_json_output_file()
 
     def run(self) -> None:
@@ -110,7 +110,7 @@ class PMCMC:
             proposal_likelihood = vmap(self._prior.get_likelihood)(theta_prop)
 
             valid_proposals = jnp.isfinite(proposal_likelihood)
-            pf_outputs = vmap(self._run_filter)(theta_prop[valid_proposals])
+            pf_outputs = pmap(self._run_filter)(theta_prop[valid_proposals])
 
             proposal_likelihood = proposal_likelihood.at[valid_proposals].set(
                 proposal_likelihood[valid_proposals]
@@ -162,7 +162,7 @@ class PMCMC:
         loc_code: str = self.location_settings["location_code"]
         files_dir: str = path.join(paths.PMCMC_RUNS_DIR, loc_code)
         mle_betas_path: str = path.join(
-            files_dir, f"{f_string}mle_betas-{self.timestamp}.csv"
+            files_dir, f"{self.diffusion_coeff}_{f_string}mle_betas-{self.timestamp}.csv"
         )
         mle_states_path: str = path.join(
             files_dir, f"{f_string}mle_states-{self.timestamp}.npy"

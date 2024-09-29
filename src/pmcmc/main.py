@@ -94,7 +94,7 @@ def get_prior() -> Prior:
     return UniformPrior()
 
 
-diffusion_coeffs = [0.05, 0.1, 0.2, 0.5, 1, 1.5]
+diffusion_coeffs = [0.05, 0.1, 0.2, 0.5, 1, 2]
 
 
 def run_main(coeff):
@@ -103,3 +103,4 @@ def run_main(coeff):
 
 if __name__ == "__main__":
     with mp.Pool(processes=len(diffusion_coeffs)) as pool:
+        pool.map(run_main, diffusion_coeffs)
