@@ -3,10 +3,10 @@
 #SBATCH --job-name=pmcmc_beta_generate
 #SBATCH --output=/scratch/apa235/diff_coeff_test.txt
 #SBATCH --nodes=1
-#SBATCH --mincpus=28
+#SBATCH --mincpus=25
 #SBATCH --time=36:00:00
 #SBATCH --chdir=/projects/math_cheny/pmcmc_tests_andrew/diff_coeff_test/
-#SBATCH --mem=32GB
+#SBATCH --mem=64GB
 
 # added echo statements for debugging
 

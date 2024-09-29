@@ -8,7 +8,7 @@ import jax.numpy as jnp
 import jax.random as random
 import \
     pytz
-from jax import Array, vmap
+from jax import Array, vmap, pmap
 from jax.numpy.linalg import cholesky
 from jax.typing import ArrayLike
 from tqdm import tqdm
@@ -31,6 +31,7 @@ class PMCMC:
         location_info: Dict[str, Any],
         observation_data: ArrayLike,
         num_chains: int = 3,
+        diffusion_coeff: float = 0.1,
     ) -> None:
         self._num_params = len(init_thetas[0])
         self._iterations = iterations
@@ -41,7 +42,8 @@ class PMCMC:
         self.observation_data = observation_data
         self.num_chains = num_chains
         self.burn_in = burn_in
-        self.diffusion_coeff = 0.5
+        self.diffusion_coeff = diffusion_coeff
+        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         self._mle_betas = None
         self._mle_hospitalizations = None
@@ -80,7 +82,7 @@ class PMCMC:
 
         json_dir = path.join(paths.PMCMC_RUNS_DIR, location_info["location_code"])
         os.makedirs(json_dir, exist_ok=True)
-        self.json_out_path = path.join(json_dir, f"{location_info['target_date']}.json")
+        self.json_out_path = path.join(json_dir, f"{location_info['target_date']}-{self.timestamp}-diff{self.diffusion_coeff}.json")
         self.init_json_output_file()
 
     def run(self) -> None:
@@ -109,7 +111,7 @@ class PMCMC:
             proposal_likelihood = vmap(self._prior.get_likelihood)(theta_prop)
 
             valid_proposals = jnp.isfinite(proposal_likelihood)
-            pf_outputs = vmap(self._run_filter)(theta_prop[valid_proposals])
+            pf_outputs = pmap(self._run_filter)(theta_prop[valid_proposals])
 
             proposal_likelihood = proposal_likelihood.at[valid_proposals].set(
                 proposal_likelihood[valid_proposals]
@@ -165,11 +167,11 @@ class PMCMC:
 
         loc_code: str = self.location_settings['location_code']
         files_dir: str = path.join(paths.PMCMC_RUNS_DIR, loc_code)
-        mle_betas_path: str = path.join(files_dir, f'{f_string}mle_betas-{current_date}.csv')
-        mle_states_path: str = path.join(files_dir, f'{f_string}mle_states-{current_date}.npy')
-        likelihoods_path: str = path.join(files_dir, f'{f_string}likelihoods{current_date}.npy')
-        thetas_path: str = path.join(files_dir, f'{f_string}thetas-{current_date}.npy')
-        acceptance_path: str = path.join(files_dir, f'{f_string}acceptance-{current_date}.csv')
+        mle_betas_path: str = path.join(files_dir, f'{self.diffusion_coeff}_{f_string}mle_betas-{self.timestamp}.csv')
+        mle_states_path: str = path.join(files_dir, f'{self.diffusion_coeff}_{f_string}mle_states-{self.timestamp}.npy')
+        likelihoods_path: str = path.join(files_dir, f'{self.diffusion_coeff}_{f_string}likelihoods{self.timestamp}.npy')
+        thetas_path: str = path.join(files_dir, f'{self.diffusion_coeff}_{f_string}thetas-{self.timestamp}.npy')
+        acceptance_path: str = path.join(files_dir, f'{self.diffusion_coeff}_{f_string}acceptance-{self.timestamp}.csv')
 
         betas_df = pd.DataFrame(self._mle_betas)
         betas_df.to_csv(mle_betas_path)
