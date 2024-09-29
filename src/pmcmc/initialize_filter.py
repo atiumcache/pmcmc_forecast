@@ -14,6 +14,7 @@ def initialize_particle_filter(
     target_date: str,
     runtime: int,
     logger: Logger,
+    dispersion: float
 ) -> ParticleFilterAlgo:
     """Initializes a ParticleFilterAlgo object."""
 
@@ -28,7 +29,7 @@ def initialize_particle_filter(
         dt=config["filter_params"]["dt"],
         beta_prior=tuple(config["filter_params"]["beta_prior"]),
         seed_size=config["filter_params"]["seed_size"],
-        dispersion=config["filter_params"]["dispersion"],
+        dispersion=dispersion,
     )
 
     pf_algo = ParticleFilterAlgo(settings=global_settings, logger=logger)

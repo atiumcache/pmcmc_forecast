@@ -12,7 +12,7 @@ initial_theta = [{'dispersion' = 0.1},
                  {'dispersion' = 1}]
 
 [filter_params]
-num_particles = 100
+num_particles = 150
 dt = 1.0
 seed_size = 0.03
 dispersion = 50

@@ -281,7 +281,9 @@ class ParticleCloud:
         Returns:
             None. Updates the instance weights directly.
         """
-        dispersion = 1 / self.settings.dispersion  # because we are estimating the inverse
+        dispersion = (
+            1 / self.settings.dispersion
+        )  # because we are estimating the inverse
         new_weights = jax.vmap(self._compute_single_weight, in_axes=(None, 0, None))(
             reported_data, self.hosp_estimates[:, t], dispersion
         )

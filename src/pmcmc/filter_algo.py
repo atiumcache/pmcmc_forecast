@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 from jax import random
 from jax.typing import ArrayLike
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 
 from src import paths
 from src.pmcmc.global_settings import GlobalSettings
