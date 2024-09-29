@@ -1,7 +1,7 @@
 # config.toml
 
 [mcmc]
-iterations = 300
+iterations = 500
 burn_in = 10
 # initial_theta overrides other parameters.
 # if a parameter is set here, then it will
