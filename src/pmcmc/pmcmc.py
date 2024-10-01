@@ -111,7 +111,7 @@ class PMCMC:
             proposal_likelihood = vmap(self._prior.get_likelihood)(theta_prop)
 
             valid_proposals = jnp.isfinite(proposal_likelihood)
-            pf_outputs = pmap(self._run_filter)(theta_prop[valid_proposals])
+            pf_outputs = vmap(self._run_filter)(theta_prop[valid_proposals])
 
             proposal_likelihood = proposal_likelihood.at[valid_proposals].set(
                 proposal_likelihood[valid_proposals]
