@@ -19,12 +19,14 @@ import pandas as pd
 from jax import Array
 from scipy.integrate import solve_ivp
 from scipy.stats import nbinom
+from src import paths
 
 
 def main(forecasted_betas: Array, location_code: str, reference_date: str) -> None:
     all_data = DataReader(location_code, reference_date)
 
-    endpoint = len(all_data.estimated_state) - 1
+    # endpoint = len(all_data.estimated_state) - 1
+    endpoint = 49  # hardcoded for quick testing on 50 days
     time_span = [0, endpoint]
     days_to_forecast = 28
     forecast_span = (endpoint + 1, endpoint + days_to_forecast)
@@ -221,29 +223,46 @@ class DataReader:
         self.predicted_beta = None
         self.observations = None
         self.estimated_state = None
+        self.final_state = None
         self.pf_beta = None
         self.read_in_data()
 
     def read_in_data(self):
-        self.predicted_beta = pd.read_csv(
-            f"./datasets/beta_forecast_output/{self.loc_code}/{self.ref_date}/out_logit-beta_trj_rnorm.csv"
-        ).to_numpy()
-
-        self.observations = pd.read_csv(
-            f"./datasets/hosp_data/hosp_{self.loc_code}_filtered.csv"
+        # Read in predicted betas from Trend Forecasting
+        predicted_beta_path = os.path.join(
+            paths.OUTPUT_DIR, "trend_forecast_test", self.ref_date, "b_t_fct_boot.csv"
         )
-        self.observations = self.observations.drop(columns="Unnamed: 0").to_numpy()
-        self.observations = np.delete(self.observations, 0, 1)
+        self.predicted_beta = pd.read_csv(predicted_beta_path).to_numpy()
 
-        self.estimated_state = pd.read_csv(
-            f"./datasets/pf_results/{self.loc_code}_ESTIMATED_STATE.csv"
-        ).to_numpy()
-        self.estimated_state = np.delete(self.estimated_state, 0, 1)
+        # Read in observations
+        self.observations = self.get_observations()
 
-        self.pf_beta = pd.read_csv(
-            f"./datasets/pf_results/{self.loc_code}_average_beta.csv"
-        ).to_numpy()
-        self.pf_beta = np.delete(self.pf_beta, 0, 1).squeeze()
+        # Read in estimated system states from PMCMC
+        estimated_state_path = os.path.join(
+            paths.OUTPUT_DIR,
+            "trend_forecast_test",
+            "in_progress_mle_states-2024-09-18.npy",
+        )
+        mle_states = np.load(estimated_state_path)
+        mean_states = mle_states.mean(axis=0)
+        self.final_state = mean_states[:, -1][0:5]
+
+        # Read in the Particle Filter betas
+        self.pf_beta = None
+
+    def get_observations(self):
+        observations_path = os.path.join(
+            paths.DATASETS_DIR, "hosp_data", f"hosp_{self.loc_code}.csv"
+        )
+        df = pd.read_csv(observations_path)
+        df = df.drop(columns=["state", "Unnamed: 0"])
+        df["date"] = pd.to_datetime(df["date"])
+        start_date = pd.to_datetime(self.ref_date) - pd.Timedelta(days=49)
+        end_date = pd.to_datetime(self.ref_date)
+        subset_df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
+        subset_df = subset_df.drop(columns=["date"])
+        subset_np = subset_df.to_numpy()
+        return subset_np
 
 
 def solve_system_through_forecast(
