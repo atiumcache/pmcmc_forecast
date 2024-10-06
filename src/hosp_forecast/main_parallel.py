@@ -42,9 +42,10 @@ def main(
 
     all_forecasts = np.array(results)
     print("All Forecasts Shape:", all_forecasts.shape)
+    print('\n\nall_forecasts:', all_forecasts[:, 4, :].shape)
 
     # Daily difference in hosp compartment is new hospitalizations
-    forecast_new_hosp = np.diff(all_forecasts[:, 4, :], axis=2)
+    forecast_new_hosp = np.diff(all_forecasts[:, 4, :], axis=1)
 
     if use_nbinom:
         # Generate a negative binomial distribution over the observed and forecasted.
@@ -160,10 +161,10 @@ def save_output_to_csv(
         reference_date: Date to predict from.
         horizon_sums: Dict containing weekly prediction quantiles.
     """
-    dir_path = os.path.join(paths.OUTPUT_DIR, "hosp_forecast")
+    dir_path = os.path.join(paths.OUTPUT_DIR, "hosp_forecast", reference_date)
     os.makedirs(dir_path, exist_ok=True)
     csv_path = os.path.join(
-        dir_path, reference_date, f"{location_code}-PMCMC-flu-predictions.csv"
+        dir_path, f"{location_code}-PMCMC-flu-predictions.csv"
     )
     reference_date_dt = datetime.strptime(reference_date, "%Y-%m-%d")
     target_end_dates = generate_target_end_dates(reference_date_dt)
@@ -252,6 +253,7 @@ class DataReader:
         mle_states = np.load(estimated_state_path)
         mean_states = mle_states.mean(axis=0)
         self.final_state = mean_states[:, -1][0:5]
+        print(self.final_state)
 
         # Read in the Particle Filter betas
         self.pf_beta = None
@@ -295,7 +297,7 @@ def solve_system_through_forecast(
         t_span=[forecast_span[0], forecast_span[1]],
         y0=np.concatenate(
             (
-                all_data.final_state,
+                all_data.final_state[0:4],
                 all_data.observations[endpoint],
             )
         ),
