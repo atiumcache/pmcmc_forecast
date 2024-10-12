@@ -157,7 +157,6 @@ class PMCMC:
             f_string = "in_progress_"
 
         loc_code: str = self.location_settings["location_code"]
-        f_string = loc_code + "_" + f_string
         files_dir: str = path.join(paths.PMCMC_RUNS_DIR, loc_code)
         mle_betas_path: str = path.join(files_dir, f"{f_string}mle_betas.csv")
         mle_states_path: str = path.join(files_dir, f"{f_string}mle_states.npy")
