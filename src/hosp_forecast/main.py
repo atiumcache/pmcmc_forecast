@@ -8,7 +8,7 @@ from jax import Array
 from scipy.integrate import solve_ivp
 from scipy.stats import nbinom
 import multiprocessing as mp
-from src import paths
+from src.utils import paths
 
 
 def main(

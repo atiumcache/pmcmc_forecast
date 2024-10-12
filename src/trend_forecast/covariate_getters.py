@@ -12,7 +12,7 @@ import requests
 from pandas import Series
 from pytrends.request import TrendReq
 
-from src import paths
+from src.utils import paths
 
 
 def get_lat_long(loc_code: str) -> Tuple[float, float]:

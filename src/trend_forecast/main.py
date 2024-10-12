@@ -8,7 +8,7 @@ from numpy import array as np_array
 from numpy import savetxt as np_savetxt
 from multiprocessing import Pool
 
-from src import paths
+from src.utils import paths
 from src.trend_forecast.covariates import (
     CovariateSelection,
     get_covariate_data,

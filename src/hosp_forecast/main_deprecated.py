@@ -19,7 +19,7 @@ import pandas as pd
 from jax import Array
 from scipy.integrate import solve_ivp
 from scipy.stats import nbinom
-from src import paths
+from src.utils import paths
 
 
 def main(forecasted_betas: Array, location_code: str, reference_date: str) -> None:

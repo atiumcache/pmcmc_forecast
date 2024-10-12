@@ -5,7 +5,7 @@ from datetime import datetime
 import pytz
 import toml
 
-from src import paths
+from src.utils import paths
 
 
 def get_logger():

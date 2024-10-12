@@ -11,7 +11,7 @@ from jax.numpy.linalg import cholesky
 from jax.typing import ArrayLike
 from tqdm import tqdm
 
-from src import paths
+from src.utils import paths
 from src.pmcmc.filter_algo import PFOutput
 from src.pmcmc.initialize_filter import initialize_particle_filter
 from src.pmcmc.logger import get_logger

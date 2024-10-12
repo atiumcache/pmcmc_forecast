@@ -1,4 +1,10 @@
 """
+This script is for reference as we build the new pipeline.
+Functionality is deprecated. This script WILL NOT work
+on the PMCMC pipeline.
+
+
+Old info for a previous pipeline:
 This is the main script to run the full forecasting pipeline
 on all locations.
 
@@ -28,9 +34,9 @@ def main():
     # Initialize location mappings and 'predict-from' dates.
     # Each date corresponds to a reference date that we will make predictions from.
     location_code_to_abbr, locations = generate_location_mappings(
-        "./datasets/locations.csv"
+        "../../datasets/locations.csv"
     )
-    predict_from_dates = pd.read_csv("./datasets/predict_from_dates.csv")
+    predict_from_dates = pd.read_csv("../../datasets/predict_from_dates.csv")
 
     state_times = []  # track the algo runtime for each state
     working_dir = os.getcwd()

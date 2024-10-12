@@ -7,7 +7,7 @@ from jax import random
 from jax.typing import ArrayLike
 from tqdm import tqdm
 
-from src import paths
+from src.utils import paths
 from src.pmcmc.global_settings import GlobalSettings
 from src.pmcmc.observation_data import ObservationData
 from src.pmcmc.particle_cloud import ParticleCloud

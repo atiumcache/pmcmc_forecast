@@ -3,7 +3,7 @@ from os.path import join
 
 from flask import Flask, jsonify, render_template
 
-from src import paths
+from src.utils import paths
 
 app = Flask(__name__)
 

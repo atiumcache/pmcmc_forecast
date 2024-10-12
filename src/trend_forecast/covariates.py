@@ -5,9 +5,6 @@ This module contains functions for getting covariate data.
 import os.path
 from collections import namedtuple
 
-import pandas as pd
-
-from src import paths
 from src.trend_forecast.covariate_getters import *
 
 CovariateSelection = namedtuple(

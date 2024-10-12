@@ -5,7 +5,7 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 import matplotlib.dates as mdates
-from src import paths
+from src.utils import paths
 import os
 
 

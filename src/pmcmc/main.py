@@ -7,14 +7,13 @@ by the Trend Forecasting R script.
 """
 
 from os import path
-from typing import Callable
 
 import pandas as pd
 import toml
 from jax import Array
 from jax.typing import ArrayLike
 
-from src import paths
+from src.utils import paths
 from src.pmcmc.helpers import get_data_since_week_26
 from src.pmcmc.location import Location
 from src.pmcmc.pmcmc import PMCMC

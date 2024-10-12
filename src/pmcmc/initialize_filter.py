@@ -3,7 +3,7 @@ from logging import Logger
 
 import toml
 
-from src import paths
+from src.utils import paths
 from src.pmcmc.filter_algo import ParticleFilterAlgo
 from src.pmcmc.global_settings import GlobalSettings
 

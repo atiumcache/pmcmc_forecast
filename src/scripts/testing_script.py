@@ -4,7 +4,6 @@ on NAU's Monsoon HPC.
 """
 
 import jax.numpy as jnp
-import matplotlib.pyplot as plt
 import numpy as np
 from jax.random import PRNGKey
 
@@ -30,7 +29,7 @@ key = PRNGKey(0)
 
 import os
 
-from src import paths
+from src.utils import paths
 
 config_path = os.path.join(paths.PMCMC_DIR, "config.toml")
 
