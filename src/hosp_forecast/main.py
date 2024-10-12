@@ -42,7 +42,7 @@ def main(
 
     all_forecasts = np.array(results)
     print("All Forecasts Shape:", all_forecasts.shape)
-    print('\n\nall_forecasts:', all_forecasts[:, 4, :].shape)
+    print("\n\nall_forecasts:", all_forecasts[:, 4, :].shape)
 
     # Daily difference in hosp compartment is new hospitalizations
     forecast_new_hosp = np.diff(all_forecasts[:, 4, :], axis=1)
@@ -165,9 +165,7 @@ def save_output_to_csv(
     """
     dir_path = os.path.join(paths.OUTPUT_DIR, "hosp_forecast", reference_date)
     os.makedirs(dir_path, exist_ok=True)
-    csv_path = os.path.join(
-        dir_path, f"{location_code}-PMCMC-flu-predictions.csv"
-    )
+    csv_path = os.path.join(dir_path, f"{location_code}-PMCMC-flu-predictions.csv")
     reference_date_dt = datetime.strptime(reference_date, "%Y-%m-%d")
     target_end_dates = generate_target_end_dates(reference_date_dt)
 

@@ -398,6 +398,9 @@ class ParticleCloud:
         self.states = self.states.at[:, 5, t].set(betas)
         self.betas = self.betas.at[:, t].set(betas)
 
+        # Ensure non-negative beta values
+        self.betas = jnp.where(self.betas > 0, self.betas, 0.001)
+
 
 def jacobian(input_array: ArrayLike) -> Array:
     """

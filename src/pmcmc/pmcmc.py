@@ -33,7 +33,10 @@ class PMCMC:
         self._iterations = iterations
         self._prior = prior
         self._key = random.PRNGKey(47)
+
         self.logger = get_logger()
+        self.log_config_file()
+
         self.location_settings = location_info
         self.observation_data = observation_data
         self.num_chains = num_chains
@@ -364,11 +367,12 @@ class PMCMC:
         """
         return self._mle_states
 
-    def log_config_file(self, config_file_path) -> None:
+    def log_config_file(self) -> None:
         """
         Log the contents of the config.toml file.
         """
         logger = self.logger
+        config_file_path = os.path.join(paths.PMCMC_DIR, 'config.toml')
         with open(config_file_path, "r") as file:
             config_contents = file.read()
         logger.info("Logging configuration file contents:")

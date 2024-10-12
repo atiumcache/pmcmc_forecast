@@ -2,8 +2,9 @@
 
 import os
 
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-SRC_DIR = os.path.join(ROOT_DIR, "src")
+SRC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+ROOT_DIR = os.path.abspath(os.path.join(SRC_DIR, os.pardir))
+UTILS_DIR = os.path.join(SRC_DIR, 'utils')
 PMCMC_DIR = os.path.join(SRC_DIR, "pmcmc")
 TREND_FORECAST_DIR = os.path.join(SRC_DIR, "trend_forecast")
 HOSP_FORECAST_DIR = os.path.join(SRC_DIR, "hosp_forecast")
