@@ -77,14 +77,16 @@ def main(
     # Add the predictions to the corresponding csv file.
     save_output_to_csv(location_code, reference_date, weekly_quantile_predictions)
 
+    return weekly_quantile_predictions
+
 
 @dataclass
 class SystemParameters:
     beta: Callable  # transmission rate
-    gamma: float = 0.075  # proportion of infectious individuals hospitalized
-    hosp: float = 7  # average duration of hospital stay
-    L: int = 60  # duration in recovered state
-    D: int = 7  # duration
+    gamma: float = 0.06  # proportion of infectious individuals hospitalized
+    hosp: float = 10  # average duration of hospital stay
+    L: int = 90  # duration in recovered state
+    D: int = 10  # duration
 
 
 def generate_nbinom(timeseries):

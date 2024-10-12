@@ -5,10 +5,16 @@
 #*[             trend (PLT), and piecewise cubic spline (PCS). With GA estimated changepoints,    ]*#
 #*[             we forecast beta_t for the next 28-days. This method is applied to bootstrap      ]*#
 #*[             samples. Our changepoint random forests produce an ensemble forecast on beta_t.   ]*#
-#*[ Updated   : Spetember 19, 2024                                                                   ]*#
+#*[ Updated   : October 12, 2024                                                                   ]*#
 #*[ Developers: Jaechoul Lee | Modified by: Andrew Attilio                                        ]*#
 #*[-----------------------------------------------------------------------------------------------]*#
 
+# Source the config file.
+# Settings/variables are accessible by config$setting syntax.
+# Example: config$num_bootstrap_samples
+source('config.R')
+
+# Import command line args
 args <- commandArgs(trailingOnly = TRUE)
 
 input.betas.path <- args[1]  # path to csv file containing estimated beta time series
@@ -211,7 +217,7 @@ log_print("Beginning Step 2-2.")
 #     International Journal of Forecasting, 32, 303-312.
 
 # Define random forests settings
-n_boot <- 400                                        # number of bootstrap samples
+n_boot <- config$num_bootstrap_samples               # number of bootstrap samples
 n_xprd <- ceiling( sqrt( ncol(z.t_all) ) )           # number of predictors selected for each tree
 i_seed <- as.integer(loc_code)                       # seed number for GA
 
