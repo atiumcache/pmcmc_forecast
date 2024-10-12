@@ -6,6 +6,7 @@ import pandas as pd
 from jax import Array
 from numpy import array as np_array
 from numpy import savetxt as np_savetxt
+from multiprocessing import Pool
 
 from src import paths
 from src.trend_forecast.covariates import (
@@ -48,7 +49,7 @@ def main(beta_estimates: Array, loc_code: str, target_date: str) -> Array:
         series_length=len(beta_estimates),
     )
 
-    output_covariates_to_csv(
+    covariates_path = output_covariates_to_csv(
         covariate_data=covariate_df, loc_code=loc_code, target_date=target_date
     )
 
@@ -89,10 +90,11 @@ def run_r_subprocess(
     loc_code: str, target_date: str, beta_estimates_path: str, covariates_path: str
 ) -> str:
     """
-    The current iteration of the R script (as of Sep 7, 2024)
-    expects 4 command line args:
+    The current iteration of the R script (as of Sep 28, 2024)
+    expects 7 command line args:
         input.betas.path, input.covariates.path,
-        func.lib.path, and output.path
+        func.lib.path, output.path, working_dir,
+        target_date, and loc_code
     They must be provided in this exact order.
 
     These absolute paths are set in this function and passed
@@ -119,14 +121,17 @@ def run_r_subprocess(
         func_lib_path,
         output_path,
         r_working_dir,
-        target_date
+        target_date,
+        loc_code,
     ]
     # Ensure the directories exist
     makedirs(path.dirname(output_path), exist_ok=True)
     makedirs(r_working_dir, exist_ok=True)
 
     # Run the R subprocess and capture the output in real time
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    process = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
 
     # Read the output and error streams as they are generated
     for stdout_line in iter(process.stdout.readline, ""):
@@ -152,13 +157,53 @@ def load_beta_forecast(beta_forecast_file_path: str) -> Array:
     return beta_forecast_array
 
 
+def process_dates(dates):
+    for date in dates:
+        run_r_subprocess(
+            loc_code="04",
+            target_date=date,
+            beta_estimates_path=path.join(paths.PF_OUTPUT_DIR, str(date), "04.csv"),
+            covariates_path=path.join(
+                paths.OUTPUT_DIR, "covariates", "04", f"{str(date)}.csv"
+            ),
+        )
+
+
+def parallel_test():
+    target_dates = [
+        "2023-10-28",
+        "2023-11-04",
+        "2023-11-11",
+        "2023-11-18",
+        "2023-11-25",
+        "2023-12-02",
+        "2023-12-09",
+        "2023-12-16",
+        "2023-12-23",
+        "2023-12-30",
+        "2024-01-06",
+        "2024-01-13",
+        "2024-01-20",
+        "2024-01-27",
+        "2024-02-03",
+        "2024-02-10",
+        "2024-02-17",
+        "2024-02-24",
+        "2024-03-02",
+        "2024-03-09",
+        "2024-03-16",
+        "2024-03-23",
+        "2024-03-30",
+        "2024-04-06",
+    ]
+
+    # Split the 24 dates into 4 chunks of 6 dates each.
+    chunks = [target_dates[i : i + 6] for i in range(0, len(target_dates), 6)]
+
+    with Pool() as pool:
+        pool.map(process_dates, chunks)
+
+
 # Used for testing, or manual operation:
 if __name__ == "__main__":
-    run_r_subprocess(
-        loc_code="06",
-        target_date="2023-10-28",
-        beta_estimates_path=path.join(paths.PF_OUTPUT_DIR, "2023-10-28", "06.csv"),
-        covariates_path=path.join(
-            paths.OUTPUT_DIR, "covariates", "06", "2023-10-28.csv"
-        ),
-    )
+    parallel_test()

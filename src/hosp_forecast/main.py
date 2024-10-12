@@ -1,66 +1,73 @@
-"""
-This script takes in predicted beta values from the trend forecasting R script. 
-The output is predicted new hospitalizations for 28 days into the future,
-in a weekly format (1, 2, 3, and 4 week predictions). A quantile range is
-given for each week, which represents the uncertainty in predictions.
-
-Output csv file path is defined in save_output_to_csv().
-
-Input file paths are defined in the DataReader class.
-"""
-
-import os
 from dataclasses import dataclass
+import os
 from datetime import datetime, timedelta
 from typing import Callable
-
 import numpy as np
 import pandas as pd
 from jax import Array
 from scipy.integrate import solve_ivp
 from scipy.stats import nbinom
+import multiprocessing as mp
+from src import paths
 
 
-def main(forecasted_betas: Array, location_code: str, reference_date: str) -> None:
+def main(
+    forecasted_betas: Array,
+    location_code: str,
+    reference_date: str,
+    use_nbinom: bool = True,
+) -> None:
+    print("Starting.")
     all_data = DataReader(location_code, reference_date)
+    print("Data loaded.")
 
-    endpoint = len(all_data.estimated_state) - 1
+    # endpoint = len(all_data.estimated_state) - 1
+    endpoint = 49  # hardcoded for testing on 50 days
     time_span = [0, endpoint]
     days_to_forecast = 28
     forecast_span = (endpoint + 1, endpoint + days_to_forecast)
 
-    print(np.shape(all_data.predicted_beta))
-    print(all_data.predicted_beta)
+    num_bootstraps = forecasted_betas.shape[0]
+    print("Number Bootstraps:", num_bootstraps)
 
-    def functional_beta(t):
-        """Functional form of beta to use for integration"""
-        if t < time_span[1]:
-            return all_data.pf_beta[t]
-        else:
-            beta_to_return = all_data.predicted_beta[5, t - endpoint - 1]
-            return beta_to_return
+    # Use multiprocessing to solve the bootstrap results in parallel
+    with mp.Pool(mp.cpu_count() - 2) as pool:
+        results = pool.starmap(
+            solve_for_bootstrap,
+            [
+                (i, forecasted_betas[i], all_data, forecast_span, endpoint)
+                for i in range(num_bootstraps)
+            ],
+        )
 
-    params = SystemParameters(beta=functional_beta)
-
-    # Solve the system through the forecast time
-    forecast = solve_system_through_forecast(all_data, forecast_span, params, endpoint)
-
-    print("Forecast:", forecast)
+    all_forecasts = np.array(results)
+    print("All Forecasts Shape:", all_forecasts.shape)
+    print('\n\nall_forecasts:', all_forecasts[:, 4, :].shape)
 
     # Daily difference in hosp compartment is new hospitalizations
-    forecast_new_hosp = np.diff(forecast[4, :])
+    forecast_new_hosp = np.diff(all_forecasts[:, 4, :], axis=1)
 
-    # Generate a negative binomial distribution over the observed and forecasted.
-    time_series = np.copy(
-        np.concatenate(
-            (all_data.observations[: time_span[1]].squeeze(), forecast_new_hosp)
+    if use_nbinom:
+        # Generate a negative binomial distribution over the observed and forecasted.
+        time_series = np.copy(
+            np.concatenate(
+                (
+                    all_data.observations[: time_span[1]].squeeze(),
+                    forecast_new_hosp.mean(axis=0),
+                )
+            )
         )
-    )
-    sim_results = generate_nbinom(time_series)
+        sim_results = generate_nbinom(time_series)
 
-    quantiles_hosp = [
-        calculate_quantiles(sim_results[:, i]) for i in range(len(time_series))
-    ]
+        quantiles_hosp = [
+            calculate_quantiles(sim_results[:, i]) for i in range(len(time_series))
+        ]
+    else:
+        # Calculate quantiles directly from the bootstrapped forecasts
+        quantiles_hosp = [
+            calculate_quantiles(forecast_new_hosp[:, i])
+            for i in range(forecast_new_hosp.shape[1])
+        ]
 
     # Convert daily hospitalizations into weekly hospitalizations
     quantiles_hosp = np.array(quantiles_hosp, dtype=int)
@@ -154,9 +161,11 @@ def save_output_to_csv(
         reference_date: Date to predict from.
         horizon_sums: Dict containing weekly prediction quantiles.
     """
-    dir_path = "./datasets/hosp_forecasts/"
+    dir_path = os.path.join(paths.OUTPUT_DIR, "hosp_forecast", reference_date)
     os.makedirs(dir_path, exist_ok=True)
-    csv_path = dir_path + reference_date + "-PF-flu-predictions.csv"
+    csv_path = os.path.join(
+        dir_path, f"{location_code}-PMCMC-flu-predictions.csv"
+    )
     reference_date_dt = datetime.strptime(reference_date, "%Y-%m-%d")
     target_end_dates = generate_target_end_dates(reference_date_dt)
 
@@ -221,29 +230,47 @@ class DataReader:
         self.predicted_beta = None
         self.observations = None
         self.estimated_state = None
+        self.final_state = None
         self.pf_beta = None
         self.read_in_data()
 
     def read_in_data(self):
-        self.predicted_beta = pd.read_csv(
-            f"./datasets/beta_forecast_output/{self.loc_code}/{self.ref_date}/out_logit-beta_trj_rnorm.csv"
-        ).to_numpy()
-
-        self.observations = pd.read_csv(
-            f"./datasets/hosp_data/hosp_{self.loc_code}_filtered.csv"
+        # Read in predicted betas from Trend Forecasting
+        predicted_beta_path = os.path.join(
+            paths.OUTPUT_DIR, "trend_forecast_test", self.ref_date, "b_t_fct_boot.csv"
         )
-        self.observations = self.observations.drop(columns="Unnamed: 0").to_numpy()
-        self.observations = np.delete(self.observations, 0, 1)
+        self.predicted_beta = pd.read_csv(predicted_beta_path).to_numpy()
 
-        self.estimated_state = pd.read_csv(
-            f"./datasets/pf_results/{self.loc_code}_ESTIMATED_STATE.csv"
-        ).to_numpy()
-        self.estimated_state = np.delete(self.estimated_state, 0, 1)
+        # Read in observations
+        self.observations = self.get_observations()
 
-        self.pf_beta = pd.read_csv(
-            f"./datasets/pf_results/{self.loc_code}_average_beta.csv"
-        ).to_numpy()
-        self.pf_beta = np.delete(self.pf_beta, 0, 1).squeeze()
+        # Read in estimated system states from PMCMC
+        estimated_state_path = os.path.join(
+            paths.OUTPUT_DIR,
+            "trend_forecast_test",
+            "in_progress_mle_states-2024-09-18.npy",
+        )
+        mle_states = np.load(estimated_state_path)
+        mean_states = mle_states.mean(axis=0)
+        self.final_state = mean_states[:, -1][0:5]
+        print(self.final_state)
+
+        # Read in the Particle Filter betas
+        self.pf_beta = None
+
+    def get_observations(self):
+        observations_path = os.path.join(
+            paths.DATASETS_DIR, "hosp_data", f"hosp_{self.loc_code}.csv"
+        )
+        df = pd.read_csv(observations_path)
+        df = df.drop(columns=["state", "Unnamed: 0"])
+        df["date"] = pd.to_datetime(df["date"])
+        start_date = pd.to_datetime(self.ref_date) - pd.Timedelta(days=49)
+        end_date = pd.to_datetime(self.ref_date)
+        subset_df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
+        subset_df = subset_df.drop(columns=["date"])
+        subset_np = subset_df.to_numpy()
+        return subset_np
 
 
 def solve_system_through_forecast(
@@ -252,7 +279,8 @@ def solve_system_through_forecast(
     params: SystemParameters,
     endpoint: int,
 ) -> np.array:
-    """Solve the system through the forecast time span.
+    """
+    Solve the system through the forecast time span.
 
     Args:
         forecast_span: a tuple containing the forecast span (start and end point).
@@ -269,7 +297,7 @@ def solve_system_through_forecast(
         t_span=[forecast_span[0], forecast_span[1]],
         y0=np.concatenate(
             (
-                all_data.estimated_state[endpoint],
+                all_data.final_state[0:4],
                 all_data.observations[endpoint],
             )
         ),
@@ -278,6 +306,20 @@ def solve_system_through_forecast(
     )
 
     return solution.y
+
+
+def solve_for_bootstrap(i, forecasted_betas, all_data, forecast_span, endpoint):
+    def functional_beta(t):
+        """Functional form of beta to use for integration"""
+        if t < forecast_span[0]:
+            return all_data.pf_beta[t]
+        else:
+            beta_to_return = forecasted_betas[t - endpoint - 1]
+            return beta_to_return
+
+    params = SystemParameters(beta=functional_beta)
+    forecast = solve_system_through_forecast(all_data, forecast_span, params, endpoint)
+    return forecast
 
 
 QUANTILE_MARKS = 1.00 * np.array(
@@ -309,4 +351,4 @@ QUANTILE_MARKS = 1.00 * np.array(
 )
 
 if __name__ == "__main__":
-    main("04", "2023-10-28")
+    main("04", "2023-10-28", use_nbinom=True)
