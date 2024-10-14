@@ -169,8 +169,7 @@ def process_dates(loc_code, dates):
         )
 
 
-def parallel_test(location_code):
-    target_dates = [
+target_dates = [
         "2023-10-21",
         "2023-10-28",
         "2023-11-04",
@@ -201,11 +200,15 @@ def parallel_test(location_code):
         "2024-04-27"
     ]
 
-    def wrapped_process_dates():
-        process_dates(location_code, target_dates)
 
+def wrapped_process_dates(args):
+    location_code, dates = args
+    process_dates(location_code, dates)
+
+
+def parallel_test(location_code: str):
     # Split the 28 dates into 14 chunks of 2 dates each.
-    chunks = [target_dates[i : i + 1] for i in range(0, len(target_dates), 2)]
+    chunks = [(location_code, target_dates[i : i + 2]) for i in range(0, len(target_dates), 2)]
 
     with Pool() as pool:
         pool.map(wrapped_process_dates, chunks)
