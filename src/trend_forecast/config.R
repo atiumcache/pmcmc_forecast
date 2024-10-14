@@ -1,5 +1,5 @@
 # src/trend_forecast/config.R
 
 config <- list(
-    num_bootstrap_samples = 250
+    num_bootstrap_samples = 200
 )

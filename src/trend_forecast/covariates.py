@@ -53,7 +53,9 @@ def get_covariate_data(
     if covariates.radiation:
         data["swave_radiation"] = get_radiation(loc_code, target_date, series_length)
     if covariates.google_search:
-        data["google_search"] = get_google_search(loc_code, target_date, series_length)
+        data["google_search"] = get_google_search(loc_code, 'flu symptoms', target_date, series_length).to_numpy()
+        data['google_search'] = data['google_search'].ravel()
+        print(data["google_search"].shape)
     if covariates.movement:
         data["movement"] = get_movement_data(loc_code, target_date, series_length)
 

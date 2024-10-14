@@ -4,11 +4,9 @@
 #SBATCH --output=/scratch/apa235/pmcmc_beta_all_locs.txt
 #SBATCH --nodes=1
 #SBATCH --mincpus=63
-#SBATCH --time=12:00:00
+#SBATCH --time=24:00:00
 #SBATCH --chdir=/projects/math_cheny/pmcmc_forecast/
-#SBATCH --mem=64GB
-
-# added echo statements for debugging
+#SBATCH --mem=128GB
 
 echo -e "Starting up...\n"
 # Install python packages

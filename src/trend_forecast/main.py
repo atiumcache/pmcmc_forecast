@@ -112,7 +112,7 @@ def run_r_subprocess(
         paths.TREND_OUTPUT_DIR, target_date, f"{loc_code}_beta_forecast.csv"
     )
     main_script_path = path.join(paths.TREND_FORECAST_DIR, "trend_forecast.R")
-    r_working_dir = path.join(paths.TREND_OUTPUT_DIR, target_date)
+    r_working_dir = path.join(paths.TREND_OUTPUT_DIR, target_date, loc_code)
     cmd = [
         "Rscript",
         main_script_path,
@@ -157,20 +157,21 @@ def load_beta_forecast(beta_forecast_file_path: str) -> Array:
     return beta_forecast_array
 
 
-def process_dates(dates):
+def process_dates(loc_code, dates):
     for date in dates:
         run_r_subprocess(
-            loc_code="04",
+            loc_code=loc_code,
             target_date=date,
-            beta_estimates_path=path.join(paths.PF_OUTPUT_DIR, str(date), "04.csv"),
+            beta_estimates_path=path.join(paths.PF_OUTPUT_DIR, str(date), f"{loc_code}.csv"),
             covariates_path=path.join(
-                paths.OUTPUT_DIR, "covariates", "04", f"{str(date)}.csv"
+                paths.OUTPUT_DIR, "covariates", loc_code, f"{str(date)}.csv"
             ),
         )
 
 
-def parallel_test():
+def parallel_test(location_code):
     target_dates = [
+        "2023-10-21",
         "2023-10-28",
         "2023-11-04",
         "2023-11-11",
@@ -195,15 +196,23 @@ def parallel_test():
         "2024-03-23",
         "2024-03-30",
         "2024-04-06",
+        "2024-04-13",
+        "2024-04-20",
+        "2024-04-27"
     ]
 
-    # Split the 24 dates into 4 chunks of 6 dates each.
-    chunks = [target_dates[i : i + 6] for i in range(0, len(target_dates), 6)]
+    def wrapped_process_dates():
+        process_dates(location_code, target_dates)
+
+    # Split the 28 dates into 14 chunks of 2 dates each.
+    chunks = [target_dates[i : i + 1] for i in range(0, len(target_dates), 2)]
 
     with Pool() as pool:
-        pool.map(process_dates, chunks)
+        pool.map(wrapped_process_dates, chunks)
 
 
 # Used for testing, or manual operation:
 if __name__ == "__main__":
-    parallel_test()
+    location_codes = ['06', '08', '36', '47']
+    for location_code in location_codes:
+        parallel_test(location_code)

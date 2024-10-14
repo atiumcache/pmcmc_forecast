@@ -339,7 +339,7 @@ target_date_obj <- as.Date(date_string)
 day_1_obj <- target_date_obj - nrow(df.yz_fin)
 
 # Save all forecasts plot to PNG
-png(filename="forecast_plot.png", width=10.5, height=5, units="in", res=300)
+png(filename="forecast_plot.png", width=10.5, height=5, units="in", res=300, type='cairo')
 autoplot( b.t ) +
    autolayer( b.t_fct.boot[,1:n_boot], col=TRUE ) +
    autolayer( b.t, col=FALSE ) +
@@ -351,7 +351,7 @@ autoplot( b.t ) +
 dev.off()
 
 # Save ensemble forecast plot to PNG
-png(filename="ensemble_forecast.png", width=10.5, height=5, units="in", res=300)
+png(filename="ensemble_forecast.png", width=10.5, height=5, units="in", res=300, type='cairo')
 autoplot( b.t ) +
    autolayer( ens_f95, series="95% PI" ) +
    autolayer( b.t, col=TRUE, linewidth=0.5, series="PF b.t" ) +
