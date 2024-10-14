@@ -8,7 +8,7 @@
 #SBATCH --cpus-per-task=28
 #SBATCH --time=24:00:00
 #SBATCH --mem=200GB
-#SBATCH --chdir=/projects/math_cheny/pmcmc_forecast
+#SBATCH --chdir=/projects/math_cheny/pmcmc_tests_andrew/pmcmc_forecast
 
 # added echo statements for debugging
 
