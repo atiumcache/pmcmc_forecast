@@ -12,7 +12,7 @@
 # Source the config file.
 # Settings/variables are accessible by config$setting syntax.
 # Example: config$num_bootstrap_samples
-source('config.R')
+# source('config.R')
 
 # Import command line args
 args <- commandArgs(trailingOnly = TRUE)
@@ -217,7 +217,7 @@ log_print("Beginning Step 2-2.")
 #     International Journal of Forecasting, 32, 303-312.
 
 # Define random forests settings
-n_boot <- config$num_bootstrap_samples               # number of bootstrap samples
+n_boot <- 200               # number of bootstrap samples
 n_xprd <- ceiling( sqrt( ncol(z.t_all) ) )           # number of predictors selected for each tree
 i_seed <- as.integer(loc_code)                       # seed number for GA
 
