@@ -57,9 +57,11 @@ class Transition(ABC):
 
     @abstractmethod
     def sto_component(self, state: ArrayLike, dt: float, key: KeyArray) -> Array:
-        """The stochastic component of the SDE model.
+        """
+        The stochastic component of the SDE model.
 
-        Must be defined by each concrete implementation of the Transition class."""
+        Must be defined by each concrete implementation of the Transition class.
+        """
         raise NotImplementedError("Subclasses must implement this method.")
 
     @abstractmethod

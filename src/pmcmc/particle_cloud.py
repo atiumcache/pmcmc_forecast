@@ -187,7 +187,7 @@ class ParticleCloud:
 
         Helper function for update_all_particles. Each particle's update is
         performed separately to accommodate for individual gradient/sensitivity
-        calculations.
+        calculations that may be added in the future.
 
         Args:
             state: the current state of the particle at time t.
@@ -314,7 +314,10 @@ class ParticleCloud:
         self.weights = self.weights.at[:, t].set(norm_weights)
 
     def resample_deprecated(self, t: int) -> None:
-
+        """
+        Deprecated version of the resampling algorithm.
+        Moved to a JAX version below.
+        """
         resampling_indices = jnp.zeros(self.settings.num_particles, dtype=int)
         cdf_log = jacobian(self.weights[:, t])
         self.key, subkey = random.split(self.key)

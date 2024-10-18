@@ -66,7 +66,7 @@ def plot_mcmc_overview(file_path: str) -> None:
     plt.show()
 
 
-def plot_predictions_with_quantile_range(prediction_date, location, weeks_prior=4):
+def plot_predictions_with_quantile_range(prediction_date, location, weeks_prior=4, pf_uncertainty: bool = True):
     """
     Plot the actual hospitalization reports against the predicted hospitalizations.
 
@@ -74,6 +74,7 @@ def plot_predictions_with_quantile_range(prediction_date, location, weeks_prior=
         prediction_date: the date that we forecast from.
         location: 2 digit location code.
         weeks_prior: number of weeks to plot data prior to prediction_data.
+        pf_uncertainty: if true, plots the particle filter's uncertainty band for hospitalization estimates.
 
     Returns:
         None. Outputs a plot.
