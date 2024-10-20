@@ -166,6 +166,7 @@ class PMCMC:
         likelihoods_path: str = path.join(files_dir, f"{f_string}likelihoods_{self.file_label}.npy")
         thetas_path: str = path.join(files_dir, f"{f_string}thetas_{self.file_label}.npy")
         acceptance_path: str = path.join(files_dir, f"{f_string}acceptance_{self.file_label}.npy")
+        hospitalizations_path: str = path.join(files_dir, f"{f_string}mle_hosp_est_{self.file_label}.npy")
 
         betas_df = pd.DataFrame(self._mle_betas)
         betas_df.to_csv(mle_betas_path)
@@ -174,6 +175,7 @@ class PMCMC:
         jnp.save(file=likelihoods_path, arr=self._likelihoods)
         jnp.save(file=thetas_path, arr=self._theta_chains)
         jnp.save(file=acceptance_path, arr=self._accept_record)
+        jnp.save(file=mle_states_path, arr=self._mle_hospitalizations)
 
     def generate_theta_proposal(self, previous_theta, key):
         """

@@ -216,6 +216,6 @@ def parallel_test(location_code: str):
 
 # Used for testing, or manual operation:
 if __name__ == "__main__":
-    location_codes = ['06', '08', '36', '47']
+    location_codes = ['04', '06']
     for location_code in location_codes:
         parallel_test(location_code)

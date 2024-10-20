@@ -7,9 +7,11 @@ burn_in = 10
 # if a parameter is set here, then it will
 # be estimated by MCMC. The value set here
 # will override the filter_params below.
-initial_theta = [{'dispersion' = 15}]
+initial_theta = [{'dispersion' = 10},
+                 {'dispersion' = 25},
+                 {'dispersion' = 40}]
 # file_label is appended to output file names
-file_label = "test_8:44_20241020"
+file_label = "20241020"
 
 [filter_params]
 num_particles = 300
