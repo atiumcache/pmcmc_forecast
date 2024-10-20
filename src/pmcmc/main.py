@@ -57,6 +57,7 @@ def main(location_code: str, target_date: str) -> Array:
         location_info=location_info,
         observation_data=observations,
         burn_in=config["mcmc"]["burn_in"],
+        file_label=config["mcmc"]["file_label"],
     )
     pmcmc_algo.run()
 

@@ -197,11 +197,16 @@ class ParticleCloud:
             New state vector for a single particle.
         """
         num_steps = int(1 / self.settings.dt)
+        state = state.at[4].set(0)  # set new_hospitalizations to 0.
         for _ in range(num_steps):
             det_update = self.model.det_component(state, t) * self.settings.dt
+            state += det_update
             self.key, subkey = random.split(self.key)
             sto_update = self.model.sto_component(state, self.settings.dt, subkey)
-            state += det_update + sto_update
+            state += sto_update
+
+        # new hospitalizations cannot be less than 0
+        state = state.at[4].set(jnp.maximum(state[4], 0))
         state = self.enforce_population_constraint(state)
         return state
 
@@ -235,13 +240,16 @@ class ParticleCloud:
         """
         self.update_betas(t)
 
+        # Update each particle, given the previous time step's state.
         new_states = jax.vmap(self._update_single_particle, in_axes=(0, None))(
             self.states[:, :, t - 1], t
         )
 
+        # Save the new state at time t.
         self.states = self.states.at[:, :, t].set(new_states)
 
-        new_hosp_estimates = self.states[:, 4, t] - self.states[:, 4, t - 1]
+        # Record hospitalization estimates
+        new_hosp_estimates = self.states[:, 4, t]
         self.hosp_estimates = self.hosp_estimates.at[:, t].set(new_hosp_estimates)
 
     @staticmethod

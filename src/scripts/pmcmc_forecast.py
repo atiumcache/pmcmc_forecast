@@ -23,7 +23,6 @@ def main():
 def single_location_pipeline(loc_code: str, target_date: str) -> None:
     estimated_betas = pmcmc.main(location_code=loc_code, target_date=target_date)
     forecasted_betas = trend_forecast.main(estimated_betas, loc_code, target_date)
-
     # Currently, hosp_forecast.main outputs to a csv file, so nothing is returned.
     hosp_forecast.main(forecasted_betas, loc_code, target_date)
 

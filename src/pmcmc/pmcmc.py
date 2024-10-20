@@ -27,7 +27,8 @@ class PMCMC:
         prior: Prior,
         location_info: Dict[str, Any],
         observation_data: ArrayLike,
-        num_chains: int = 3,
+        num_chains: int = 1,
+        file_label: str = ""
     ) -> None:
         self._num_params = len(init_thetas[0])
         self._iterations = iterations
@@ -41,6 +42,7 @@ class PMCMC:
         self.observation_data = observation_data
         self.num_chains = num_chains
         self.burn_in = burn_in
+        self.file_label = file_label
 
         self._mle_betas = None
         self._mle_hospitalizations = None
@@ -74,6 +76,7 @@ class PMCMC:
                     particle_states=pf_output.states,
                     particle_betas=pf_output.betas,
                 )
+                self.output_data(in_progress=True)
 
         self.theta_dictionary_template = init_thetas[0]
 
@@ -158,11 +161,11 @@ class PMCMC:
 
         loc_code: str = self.location_settings["location_code"]
         files_dir: str = path.join(paths.PMCMC_RUNS_DIR, loc_code)
-        mle_betas_path: str = path.join(files_dir, f"{f_string}mle_betas.csv")
-        mle_states_path: str = path.join(files_dir, f"{f_string}mle_states.npy")
-        likelihoods_path: str = path.join(files_dir, f"{f_string}likelihoods.npy")
-        thetas_path: str = path.join(files_dir, f"{f_string}thetas.npy")
-        acceptance_path: str = path.join(files_dir, f"{f_string}acceptance.csv")
+        mle_betas_path: str = path.join(files_dir, f"{f_string}mle_betas_{self.file_label}.csv")
+        mle_states_path: str = path.join(files_dir, f"{f_string}mle_states_{self.file_label}.npy")
+        likelihoods_path: str = path.join(files_dir, f"{f_string}likelihoods_{self.file_label}.npy")
+        thetas_path: str = path.join(files_dir, f"{f_string}thetas_{self.file_label}.npy")
+        acceptance_path: str = path.join(files_dir, f"{f_string}acceptance_{self.file_label}.npy")
 
         betas_df = pd.DataFrame(self._mle_betas)
         betas_df.to_csv(mle_betas_path)

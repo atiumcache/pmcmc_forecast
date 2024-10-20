@@ -39,7 +39,7 @@ class Transition(ABC):
             If we want to be able to update parameters throughout a PF run,
             we would need to change this functionality.
         """
-        S, I, R, H, new_H, beta = state  # unpack the state variables
+        S, I, R, H, last_new_H, beta = state  # unpack the state variables
         N = S + I + R + H  # compute the total population
 
         new_H = (1 / self.params.D) * self.params.gamma * I
@@ -104,15 +104,12 @@ class OUModel(Transition):
         dI = self.params.dW_volatility * dW[1] * I
         dR = self.params.dW_volatility * dW[2] * R
         dH = self.params.dW_volatility * dW[3] * H
-        new_H = (
-            self.params.dW_volatility
-            * dW[4]
-            * (1 / self.params.D)
-            * self.params.gamma
-            * I
-        )
+        # No stochasticity for new_H
+        # because it is calculated from I,
+        # which already has stochastic effect.
+        dnew_H = self.params.dW_volatility * dW[4] * new_H
 
-        return jnp.array([dS, dI, dR, dH, new_H, 0])
+        return jnp.array([dS, dI, dR, dH, 0, 0])
 
     def update_beta(self, beta: float, dt: float, t: int, key: KeyArray) -> float:
         """Update beta according to an OU process.
