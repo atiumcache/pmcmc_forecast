@@ -237,7 +237,11 @@ class DataReader:
     def read_in_data(self):
         # Read in predicted betas from Trend Forecasting
         predicted_beta_path = os.path.join(
-            paths.OUTPUT_DIR, "06_trend_test", self.ref_date, self.loc_code, "b_t_fct_boot.csv"
+            paths.OUTPUT_DIR,
+            "06_trend_test",
+            self.ref_date,
+            self.loc_code,
+            "b_t_fct_boot.csv",
         )
         self.predicted_beta = pd.read_csv(predicted_beta_path).to_numpy()
 

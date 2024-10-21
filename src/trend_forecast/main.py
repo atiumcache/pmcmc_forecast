@@ -162,7 +162,9 @@ def process_dates(loc_code, dates):
         run_r_subprocess(
             loc_code=loc_code,
             target_date=date,
-            beta_estimates_path=path.join(paths.PF_OUTPUT_DIR, str(date), f"{loc_code}.csv"),
+            beta_estimates_path=path.join(
+                paths.PF_OUTPUT_DIR, str(date), f"{loc_code}.csv"
+            ),
             covariates_path=path.join(
                 paths.OUTPUT_DIR, "covariates", loc_code, f"{str(date)}.csv"
             ),
@@ -170,35 +172,35 @@ def process_dates(loc_code, dates):
 
 
 target_dates = [
-        "2023-10-21",
-        "2023-10-28",
-        "2023-11-04",
-        "2023-11-11",
-        "2023-11-18",
-        "2023-11-25",
-        "2023-12-02",
-        "2023-12-09",
-        "2023-12-16",
-        "2023-12-23",
-        "2023-12-30",
-        "2024-01-06",
-        "2024-01-13",
-        "2024-01-20",
-        "2024-01-27",
-        "2024-02-03",
-        "2024-02-10",
-        "2024-02-17",
-        "2024-02-24",
-        "2024-03-02",
-        "2024-03-09",
-        "2024-03-16",
-        "2024-03-23",
-        "2024-03-30",
-        "2024-04-06",
-        "2024-04-13",
-        "2024-04-20",
-        "2024-04-27"
-    ]
+    "2023-10-21",
+    "2023-10-28",
+    "2023-11-04",
+    "2023-11-11",
+    "2023-11-18",
+    "2023-11-25",
+    "2023-12-02",
+    "2023-12-09",
+    "2023-12-16",
+    "2023-12-23",
+    "2023-12-30",
+    "2024-01-06",
+    "2024-01-13",
+    "2024-01-20",
+    "2024-01-27",
+    "2024-02-03",
+    "2024-02-10",
+    "2024-02-17",
+    "2024-02-24",
+    "2024-03-02",
+    "2024-03-09",
+    "2024-03-16",
+    "2024-03-23",
+    "2024-03-30",
+    "2024-04-06",
+    "2024-04-13",
+    "2024-04-20",
+    "2024-04-27",
+]
 
 
 def wrapped_process_dates(args):
@@ -208,7 +210,9 @@ def wrapped_process_dates(args):
 
 def parallel_test(location_code: str):
     # Split the 28 dates into 14 chunks of 2 dates each.
-    chunks = [(location_code, target_dates[i : i + 2]) for i in range(0, len(target_dates), 2)]
+    chunks = [
+        (location_code, target_dates[i : i + 2]) for i in range(0, len(target_dates), 2)
+    ]
 
     with Pool() as pool:
         pool.map(wrapped_process_dates, chunks)
@@ -216,6 +220,6 @@ def parallel_test(location_code: str):
 
 # Used for testing, or manual operation:
 if __name__ == "__main__":
-    location_codes = ['04', '06']
+    location_codes = ["04", "06"]
     for location_code in location_codes:
         parallel_test(location_code)

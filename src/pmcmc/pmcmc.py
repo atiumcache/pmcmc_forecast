@@ -28,7 +28,7 @@ class PMCMC:
         location_info: Dict[str, Any],
         observation_data: ArrayLike,
         num_chains: int = 1,
-        file_label: str = ""
+        file_label: str = "",
     ) -> None:
         self._num_params = len(init_thetas[0])
         self._iterations = iterations
@@ -161,12 +161,24 @@ class PMCMC:
 
         loc_code: str = self.location_settings["location_code"]
         files_dir: str = path.join(paths.PMCMC_RUNS_DIR, loc_code)
-        mle_betas_path: str = path.join(files_dir, f"{f_string}mle_betas_{self.file_label}.csv")
-        mle_states_path: str = path.join(files_dir, f"{f_string}mle_states_{self.file_label}.npy")
-        likelihoods_path: str = path.join(files_dir, f"{f_string}likelihoods_{self.file_label}.npy")
-        thetas_path: str = path.join(files_dir, f"{f_string}thetas_{self.file_label}.npy")
-        acceptance_path: str = path.join(files_dir, f"{f_string}acceptance_{self.file_label}.npy")
-        hospitalizations_path: str = path.join(files_dir, f"{f_string}mle_hosp_est_{self.file_label}.npy")
+        mle_betas_path: str = path.join(
+            files_dir, f"{f_string}mle_betas_{self.file_label}.csv"
+        )
+        mle_states_path: str = path.join(
+            files_dir, f"{f_string}mle_states_{self.file_label}.npy"
+        )
+        likelihoods_path: str = path.join(
+            files_dir, f"{f_string}likelihoods_{self.file_label}.npy"
+        )
+        thetas_path: str = path.join(
+            files_dir, f"{f_string}thetas_{self.file_label}.npy"
+        )
+        acceptance_path: str = path.join(
+            files_dir, f"{f_string}acceptance_{self.file_label}.npy"
+        )
+        hospitalizations_path: str = path.join(
+            files_dir, f"{f_string}mle_hosp_est_{self.file_label}.npy"
+        )
 
         betas_df = pd.DataFrame(self._mle_betas)
         betas_df.to_csv(mle_betas_path)
@@ -175,7 +187,7 @@ class PMCMC:
         jnp.save(file=likelihoods_path, arr=self._likelihoods)
         jnp.save(file=thetas_path, arr=self._theta_chains)
         jnp.save(file=acceptance_path, arr=self._accept_record)
-        jnp.save(file=mle_states_path, arr=self._mle_hospitalizations)
+        jnp.save(file=hospitalizations_path, arr=self._mle_hospitalizations)
 
     def generate_theta_proposal(self, previous_theta, key):
         """
@@ -377,7 +389,7 @@ class PMCMC:
         Log the contents of the config.toml file.
         """
         logger = self.logger
-        config_file_path = os.path.join(paths.PMCMC_DIR, 'config.toml')
+        config_file_path = os.path.join(paths.PMCMC_DIR, "config.toml")
         with open(config_file_path, "r") as file:
             config_contents = file.read()
         logger.info("Logging configuration file contents:")

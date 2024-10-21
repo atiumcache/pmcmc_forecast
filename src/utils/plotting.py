@@ -66,7 +66,17 @@ def plot_mcmc_overview(file_path: str) -> None:
     plt.show()
 
 
-def plot_predictions_with_quantile_range(prediction_date, location, weeks_prior=4, pf_uncertainty: bool = True):
+import streamlit as st
+
+
+def plot_predictions_with_quantile_range(
+    prediction_date: str,
+    location: str,
+    hosp_est_file_name: str,
+    weeks_prior=8,
+    pf_uncertainty: bool = True,
+    streamlit: bool = False,
+):
     """
     Plot the actual hospitalization reports against the predicted hospitalizations.
 
@@ -75,21 +85,24 @@ def plot_predictions_with_quantile_range(prediction_date, location, weeks_prior=
         location: 2 digit location code.
         weeks_prior: number of weeks to plot data prior to prediction_data.
         pf_uncertainty: if true, plots the particle filter's uncertainty band for hospitalization estimates.
+        streamlit: if true, use Streamlit for rendering the plot.
 
     Returns:
-        None. Outputs a plot.
+        None. Outputs a plot (either in normal Jupyter/Matplotlib or in Streamlit).
     """
+    # File paths
     pred_path = os.path.join(
         paths.HOSP_OUTPUT_DIR, prediction_date, f"{location}-PMCMC-flu-predictions.csv"
     )
     hosp_csv_path = os.path.join(
         paths.DATASETS_DIR, "hosp_data", f"hosp_{location}.csv"
     )
-    # Load your prediction and hospitalization data
+
+    # Load data
     prediction_data = pd.read_csv(pred_path)
     actual_data = pd.read_csv(hosp_csv_path)
 
-    # Convert the necessary date columns to datetime
+    # Convert dates to datetime
     actual_data["date"] = pd.to_datetime(actual_data["date"])
     prediction_data["target_end_date"] = pd.to_datetime(
         prediction_data["target_end_date"]
@@ -97,36 +110,30 @@ def plot_predictions_with_quantile_range(prediction_date, location, weeks_prior=
     prediction_data["reference_date"] = pd.to_datetime(
         prediction_data["reference_date"]
     )
-
-    # Convert prediction_date to datetime
     prediction_date = pd.to_datetime(prediction_date)
 
-    # Filter actual data for the desired location
-    actual_data_filtered = actual_data
-
-    # Filter actual hospitalizations for the 4 weeks prior to the prediction_date
+    # Filter and subset data
     start_date = prediction_date - pd.DateOffset(weeks=weeks_prior)
-    actual_subset = actual_data_filtered[
-        (actual_data_filtered["date"] >= start_date)
-        & (actual_data_filtered["date"] <= prediction_date + pd.DateOffset(weeks=4))
+    actual_subset = actual_data[
+        (actual_data["date"] >= start_date)
+        & (actual_data["date"] <= prediction_date + pd.DateOffset(weeks=4))
     ]
 
-    # Get predictions for the same location and prediction date
     prediction_subset = prediction_data[
-        (prediction_data["reference_date"] == prediction_date)
+        prediction_data["reference_date"] == prediction_date
     ]
 
-    # Select relevant quantiles directly
+    # Select relevant quantiles
     lower_quantile_data = prediction_subset[prediction_subset["output_type_id"] == 0.05]
     median_quantile_data = prediction_subset[
         prediction_subset["output_type_id"] == 0.50
     ]
-    upper_quantile_data = prediction_subset[
-        prediction_subset["output_type_id"] == 0.95
-    ]  # Resample actual data to weekly sums
+    upper_quantile_data = prediction_subset[prediction_subset["output_type_id"] == 0.95]
+
+    # Resample actual data to weekly sums
     actual_weekly = actual_subset.resample("W-Sat", on="date").sum().reset_index()
 
-    # Plot setup
+    # Create plot
     plt.figure(figsize=(12, 6))
     ax = plt.gca()
 
@@ -139,20 +146,13 @@ def plot_predictions_with_quantile_range(prediction_date, location, weeks_prior=
         marker="o",
     )
 
+    # Interpolation for quantiles
     actual_on_pred_date = actual_weekly.loc[
         actual_weekly["date"] == prediction_date,
         "previous_day_admission_influenza_confirmed",
     ].values[0]
 
-    lower_quantile_data = lower_quantile_data.drop(
-        columns=[
-            "horizon",
-            "location",
-            "output_type_id",
-            "output_type",
-            "reference_date",
-        ]
-    )
+    # Adjusting lower and upper quantile data
     new_row = {
         "target_end_date": pd.to_datetime(prediction_date),
         "value": actual_on_pred_date,
@@ -164,7 +164,7 @@ def plot_predictions_with_quantile_range(prediction_date, location, weeks_prior=
     lower_quantile_data = lower_quantile_data.sort_values(by="target_end_date")
     upper_quantile_data = upper_quantile_data.sort_values(by="target_end_date")
 
-    # Plot the quantile range (5th and 95th percentiles) as a shaded area
+    # Plot uncertainty range (5th-95th percentiles)
     ax.fill_between(
         lower_quantile_data["target_end_date"],
         lower_quantile_data["value"],
@@ -174,7 +174,7 @@ def plot_predictions_with_quantile_range(prediction_date, location, weeks_prior=
         label="5th-95th Percentile Range",
     )
 
-    # Plot the median (50th percentile) as a line
+    # Plot the median (50th percentile)
     ax.plot(
         median_quantile_data["target_end_date"],
         median_quantile_data["value"],
@@ -199,14 +199,55 @@ def plot_predictions_with_quantile_range(prediction_date, location, weeks_prior=
         ],
     )
 
-    # Add a vertical dashed line for the prediction date
+    # Add vertical line for prediction date
     ax.axvline(x=prediction_date, color="red", linestyle="--", label="Forecast Date")
-    # Formatting the date on the x-axis
+
+    # ------------------------------------------------------
+    # Plot new hospitalizations uncertainty for PF estimates
+    # ------------------------------------------------------
+    if pf_uncertainty:
+        base_dir = os.path.join(paths.OUTPUT_DIR, "pmcmc_runs")
+        loc_dir = os.path.join(base_dir, location)
+        mle_states_path = os.path.join(loc_dir, hosp_est_file_name)
+        states_np = np.load(mle_states_path)
+        last_date_index = abs((prediction_date - pd.to_datetime("2023-06-25")).days)
+        start_index = last_date_index - (weeks_prior * 7)
+        new_h = states_np[:, start_index:last_date_index]
+        new_h_df = pd.DataFrame(new_h)
+        full_date_range = pd.date_range(
+            start=start_date, periods=new_h_df.shape[1], freq="D"
+        )
+        new_h_df_T = new_h_df.T
+        quantiles = new_h_df_T.quantile([0.025, 0.5, 0.975], axis=1)
+        quantiles = quantiles.T
+        quantiles["date"] = full_date_range
+        quantiles_subset = quantiles[
+            (quantiles["date"] >= start_date) & (quantiles["date"] <= prediction_date)
+        ]
+        quantiles_subset = quantiles.resample("W-Sat", on="date").sum().reset_index()
+
+        ax.fill_between(
+            quantiles_subset["date"],
+            quantiles_subset[0.025],
+            quantiles_subset[0.975],
+            color="b",
+            alpha=0.2,
+            label="95% CI",
+        )
+        ax.plot(
+            quantiles_subset["date"],
+            quantiles_subset[0.5],
+            color="b",
+            label="Median",
+            marker="*",
+        )
+
+    # X-axis formatting
     ax.xaxis.set_major_locator(mdates.WeekdayLocator(interval=1))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
     plt.xticks(rotation=45)
 
-    # Add labels and title
+    # Labels and title
     plt.xlabel("Date")
     plt.ylabel("Hospitalizations (Weekly Sum)")
     plt.title(
@@ -215,4 +256,8 @@ def plot_predictions_with_quantile_range(prediction_date, location, weeks_prior=
     plt.legend(loc="upper right")
 
     plt.tight_layout()
-    plt.show()
+
+    if streamlit:
+        st.pyplot(plt)  # For rendering in Streamlit
+    else:
+        plt.show()  # For rendering in Jupyter or other environments
