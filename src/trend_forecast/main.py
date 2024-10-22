@@ -21,7 +21,7 @@ selected_covariates = CovariateSelection(
     sun_duration=True,
     wind_speed=True,
     radiation=True,
-    google_search=False,
+    google_search=True,
     movement=False,
 )
 
@@ -220,6 +220,6 @@ def parallel_test(location_code: str):
 
 # Used for testing, or manual operation:
 if __name__ == "__main__":
-    location_codes = ["04", "06"]
+    location_codes = ["06"]
     for location_code in location_codes:
         parallel_test(location_code)

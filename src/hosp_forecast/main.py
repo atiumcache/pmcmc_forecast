@@ -238,7 +238,7 @@ class DataReader:
         # Read in predicted betas from Trend Forecasting
         predicted_beta_path = os.path.join(
             paths.OUTPUT_DIR,
-            "06_trend_test",
+            "trend_forecast_20241021",
             self.ref_date,
             self.loc_code,
             "b_t_fct_boot.csv",
@@ -251,9 +251,9 @@ class DataReader:
         # Read in estimated system states from PMCMC
         estimated_state_path = os.path.join(
             paths.OUTPUT_DIR,
-            "pmcmc_0.10_prior_20241013",
+            "pmcmc_runs",
             self.loc_code,
-            "mle_states.npy",
+            "mle_states_20241020.npy",
         )
         mle_states = np.load(estimated_state_path)
         mean_states = mle_states.mean(axis=0)

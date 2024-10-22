@@ -1,16 +1,14 @@
 #!/bin/bash
 
-#SBATCH --job-name=trend_forecast_04_06
-#SBATCH --output=beta_forecast_04_06_%j.out
-#SBATCH --error=beta_forecast_04_06_%j.err
+#SBATCH --job-name=trend_forecast_06
+#SBATCH --output=beta_forecast_06_%j.out
+#SBATCH --error=beta_forecast_06_%j.err
 #SBATCH --nodes=14
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=28
-#SBATCH --time=14:00:00
-#SBATCH --mem=100GB
+#SBATCH --time=12:00:00
+#SBATCH --mem=200GB
 #SBATCH --chdir=/projects/math_cheny/pmcmc_tests_andrew/pmcmc_forecast
-
-# added echo statements for debugging
 
 echo -e "\nJob started at: $(date)\n"
 # Install python packages
