@@ -23,7 +23,7 @@ python3 -m pip install numpy<2
 echo -e "\nInstalled Python packages\n"
 
 # Run the Python script, passing the corresponding target date based on SLURM_ARRAY_TASK_ID
-python src.scripts.202401023_beta_mu.py ${target_dates[$SLURM_ARRAY_TASK_ID]}
+python3 -m src.scripts.202401023_beta_mu.py ${target_dates[$SLURM_ARRAY_TASK_ID]}
 
 echo -e "\nPython script completed at: $(date)\n"
 echo -e "\n Completed job.\n"
