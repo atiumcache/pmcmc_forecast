@@ -2,7 +2,7 @@
 #SBATCH --job-name=beta_mu
 #SBATCH --output=beta_mu_%A_%a.out # Output file (%A = job ID, %a = array task ID)
 #SBATCH --error=beta_mu_%A_%a.err
-#SBATCH --nodes=3                   # Request 3 nodes (1 per target date)
+#SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=60
 #SBATCH --mem=16G
