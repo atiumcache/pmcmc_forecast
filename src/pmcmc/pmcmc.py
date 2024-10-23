@@ -161,6 +161,7 @@ class PMCMC:
 
         loc_code: str = self.location_settings["location_code"]
         files_dir: str = path.join(paths.PMCMC_RUNS_DIR, loc_code)
+        os.makedirs(files_dir, exist_ok=True)
         mle_betas_path: str = path.join(
             files_dir, f"{f_string}mle_betas_{self.file_label}.csv"
         )
