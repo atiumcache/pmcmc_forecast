@@ -70,12 +70,12 @@ import streamlit as st
 
 
 def plot_daily_predictions(
-        prediction_date: str,
-        location: str,
-        hosp_est_file_name: str,
-        weeks_prior: int,
-        pf_uncertainty: bool,
-        streamlit: bool,
+    prediction_date: str,
+    location: str,
+    hosp_est_file_name: str,
+    weeks_prior: int,
+    pf_uncertainty: bool,
+    streamlit: bool,
 ):
     """
     plot...
@@ -105,14 +105,14 @@ def plot_predictions_with_quantile_range(
     Returns:
         None. Outputs a plot (either in normal Jupyter/Matplotlib or in Streamlit).
     """
-    if daily_resolution: 
+    if daily_resolution:
         plot_daily_predictions(
             prediction_date=prediction_date,
             location=location,
             hosp_est_file_name=hosp_est_file_name,
             weeks_prior=weeks_prior,
             pf_uncertainty=pf_uncertainty,
-            streamlit=streamlit
+            streamlit=streamlit,
         )
 
     # File paths
@@ -255,9 +255,9 @@ def plot_predictions_with_quantile_range(
             quantiles_subset["date"],
             quantiles_subset[0.16],
             quantiles_subset[0.84],
-            color='b',
+            color="b",
             alpha=0.2,
-            label='68% CI'
+            label="68% CI",
         )
 
         ax.fill_between(
@@ -294,10 +294,12 @@ def plot_predictions_with_quantile_range(
     if streamlit:
         st.pyplot(plt)  # For rendering in Streamlit
     else:
-        plt.show()  
+        plt.show()
 
 
-def plot_beta_forecast(beta_data_file_path: str, ensemble_file_path: str, streamlit: bool = False):
+def plot_beta_forecast(
+    beta_data_file_path: str, ensemble_file_path: str, streamlit: bool = False
+):
     """
     Plots the beta forecast results.
     """
@@ -372,4 +374,4 @@ def plot_beta_forecast(beta_data_file_path: str, ensemble_file_path: str, stream
     if streamlit:
         st.pyplot(plt)  # For rendering in Streamlit
     else:
-        plt.show()  
+        plt.show()

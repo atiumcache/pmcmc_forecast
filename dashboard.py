@@ -40,7 +40,7 @@ if st.button("Plot Hospitalizations"):
             streamlit=True,
             hosp_est_file_name="mle_hosp_est_20241020.npy",
             weeks_prior=8,
-            daily_resolution=False
+            daily_resolution=False,
         )
     except FileNotFoundError:
         st.write(

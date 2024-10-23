@@ -48,7 +48,8 @@ def main(location_code: str, target_date: str) -> Array:
     config_path = path.join(paths.PMCMC_DIR, "config.toml")
     config = toml.load(config_path)
 
-    prior = get_prior()
+    prior_range = config["mcmc"]["unif_prior"]
+    prior = get_prior(min_val=prior_range[0], max_val=prior_range[1])
 
     pmcmc_algo = PMCMC(
         iterations=config["mcmc"]["iterations"],
@@ -80,7 +81,7 @@ def get_hosp_observations(location_code, target_date) -> (ArrayLike, Location):
     return observations, location
 
 
-def get_prior() -> Prior:
+def get_prior(min_val, max_val) -> Prior:
     """
     Returns an instance of a Prior subclass.
 
@@ -89,8 +90,8 @@ def get_prior() -> Prior:
     Will utilize Kernel Density Estimation (KDE) in the future
     to create a Prior from previous week's data.
     """
-    return UniformPrior()
+    return UniformPrior(min_val=min_val, max_val=max_val)
 
 
 if __name__ == "__main__":
-    main("04", "2024-04-20")
+    main("06", "2024-12-01")

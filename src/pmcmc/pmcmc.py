@@ -9,7 +9,7 @@ import pandas as pd
 from jax import Array, vmap
 from jax.numpy.linalg import cholesky
 from jax.typing import ArrayLike
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 
 from src.utils import paths
 from src.pmcmc.filter_algo import PFOutput
@@ -54,7 +54,7 @@ class PMCMC:
         self._accept_record = jnp.zeros((self.num_chains, iterations))
 
         self._mu = jnp.zeros(self._num_params)
-        self._cov = jnp.eye(self._num_params)
+        self._cov = jnp.eye(self._num_params) * 0.001
 
         for chain_idx, init_theta in enumerate(init_thetas):
             init_theta_values = jnp.array(list(init_theta.values()))
@@ -155,9 +155,9 @@ class PMCMC:
             the algorithm is still running. So we save to a different
             file vs. the final output.
         """
-        f_string = ""
+        f_string = f"{self.location_settings['target_date']}_"
         if in_progress:
-            f_string = "in_progress_"
+            f_string = f_string + "in_progress_"
 
         loc_code: str = self.location_settings["location_code"]
         files_dir: str = path.join(paths.PMCMC_RUNS_DIR, loc_code)
@@ -308,11 +308,21 @@ class PMCMC:
             self._likelihoods[chain, i - 1]
         )
 
-    def update_cov(self, current_iter) -> None:
+    def cov_update(self, cov, mu, theta_val, iteration, burn_in):
         """
-        Updates the covariance matrix, which is used to generate theta proposals.
+        2024.10.23:
+        Not yet implemented --- pulled from Avery's code.
         """
-        raise NotImplementedError("This method has not yet been implemented.")
+        g = (iteration - burn_in + 1) ** (-0.4)
+        mu = (1.0 - g) * mu + g * theta_val
+        m_theta = theta_val - mu
+
+        try:
+            r_cov = (1.0 - g) * cov + g * np.outer(m_theta, m_theta.T)
+        except:
+            r_cov = cov
+
+        raise NotImplementedError
 
     def update_new_mle(
         self, new_likelihood, particle_estimates, particle_states, particle_betas
