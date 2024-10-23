@@ -108,7 +108,7 @@ b.t <- ts( df.yz_fin$beta[ t_prd ], start=t_bgn, frequency=1 )
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Compute logit(beta.t) with minimum and maximum values of beta.t
-b.t_min <- 0.01                                     # mean(b.t)-6*sd(b.t)=0.0785; mean(b.t)-5*sd(b.t)=0.0854
+b.t_min <- 0.005                                     # mean(b.t)-6*sd(b.t)=0.0785; mean(b.t)-5*sd(b.t)=0.0854
 b.t_max <- 0.36                                    # mean(b.t)+6*sd(b.t)=0.1612; mean(b.t)+5*sd(b.t)=0.1543
 
 lb.t <- log( (b.t - b.t_min)/(b.t_max - b.t) )      # generalized logit with b.t_min as min and b.t_max as max

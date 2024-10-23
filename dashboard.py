@@ -38,8 +38,9 @@ if st.button("Plot Hospitalizations"):
             loc_code,
             pf_uncertainty=True,
             streamlit=True,
-            hosp_est_file_name="mle_states_20241020.npy",
+            hosp_est_file_name="mle_hosp_est_20241020.npy",
             weeks_prior=8,
+            daily_resolution=False
         )
     except FileNotFoundError:
         st.write(

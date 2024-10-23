@@ -69,11 +69,26 @@ def plot_mcmc_overview(file_path: str) -> None:
 import streamlit as st
 
 
+def plot_daily_predictions(
+        prediction_date: str,
+        location: str,
+        hosp_est_file_name: str,
+        weeks_prior: int,
+        pf_uncertainty: bool,
+        streamlit: bool,
+):
+    """
+    plot...
+    """
+    raise NotImplementedError
+
+
 def plot_predictions_with_quantile_range(
     prediction_date: str,
     location: str,
     hosp_est_file_name: str,
-    weeks_prior=8,
+    weeks_prior: int,
+    daily_resolution: bool = True,
     pf_uncertainty: bool = True,
     streamlit: bool = False,
 ):
@@ -90,6 +105,16 @@ def plot_predictions_with_quantile_range(
     Returns:
         None. Outputs a plot (either in normal Jupyter/Matplotlib or in Streamlit).
     """
+    if daily_resolution: 
+        plot_daily_predictions(
+            prediction_date=prediction_date,
+            location=location,
+            hosp_est_file_name=hosp_est_file_name,
+            weeks_prior=weeks_prior,
+            pf_uncertainty=pf_uncertainty,
+            streamlit=streamlit
+        )
+
     # File paths
     pred_path = os.path.join(
         paths.HOSP_OUTPUT_DIR, prediction_date, f"{location}-PMCMC-flu-predictions.csv"
@@ -169,24 +194,24 @@ def plot_predictions_with_quantile_range(
         lower_quantile_data["target_end_date"],
         lower_quantile_data["value"],
         upper_quantile_data["value"],
-        color="blue",
-        alpha=0.2,
-        label="5th-95th Percentile Range",
+        color="orange",
+        alpha=0.5,
+        label="90% Forecast CI",
     )
 
     # Plot the median (50th percentile)
     ax.plot(
         median_quantile_data["target_end_date"],
         median_quantile_data["value"],
-        label="50th Percentile (Median)",
-        color="blue",
+        label="Median Forecast",
+        color="orange",
     )
     ax.plot(
         median_quantile_data["target_end_date"],
         median_quantile_data["value"],
         "s",
-        color="blue",
-        markersize=6,
+        color="purple",
+        markersize=5,
     )
     one_week_ahead = prediction_date + pd.DateOffset(weeks=1)
     ax.plot(
@@ -218,7 +243,7 @@ def plot_predictions_with_quantile_range(
             start=start_date, periods=new_h_df.shape[1], freq="D"
         )
         new_h_df_T = new_h_df.T
-        quantiles = new_h_df_T.quantile([0.025, 0.5, 0.975], axis=1)
+        quantiles = new_h_df_T.quantile([0.025, 0.16, 0.5, 0.84, 0.975], axis=1)
         quantiles = quantiles.T
         quantiles["date"] = full_date_range
         quantiles_subset = quantiles[
@@ -228,10 +253,19 @@ def plot_predictions_with_quantile_range(
 
         ax.fill_between(
             quantiles_subset["date"],
+            quantiles_subset[0.16],
+            quantiles_subset[0.84],
+            color='b',
+            alpha=0.2,
+            label='68% CI'
+        )
+
+        ax.fill_between(
+            quantiles_subset["date"],
             quantiles_subset[0.025],
             quantiles_subset[0.975],
             color="b",
-            alpha=0.2,
+            alpha=0.1,
             label="95% CI",
         )
         ax.plot(
@@ -260,4 +294,82 @@ def plot_predictions_with_quantile_range(
     if streamlit:
         st.pyplot(plt)  # For rendering in Streamlit
     else:
-        plt.show()  # For rendering in Jupyter or other environments
+        plt.show()  
+
+
+def plot_beta_forecast(beta_data_file_path: str, ensemble_file_path: str, streamlit: bool = False):
+    """
+    Plots the beta forecast results.
+    """
+    date_str = os.path.basename(os.path.dirname(beta_data_file_path))
+    loc_str = os.path.splitext(os.path.basename(beta_data_file_path))[0]
+
+    beta_df = pd.read_csv(beta_data_file_path)
+    ensemble_df = pd.read_csv(ensemble_file_path)
+
+    # Renaming columns for consistency
+    beta_df["time_1"] = beta_df["time_0"] + 1
+    beta_df.rename(columns={"time_1": "Day", "beta": "Beta"}, inplace=True)
+
+    combined_df = pd.concat([beta_df, ensemble_df], ignore_index=True, sort=False)
+
+    # Get the last beta value
+    last_beta_day = beta_df["Day"].max()
+    last_beta_value = beta_df.loc[beta_df["Day"] == last_beta_day, "Beta"].values[0]
+
+    # Add the last beta value as the first point in ensemble_df for a smooth connection
+    first_forecast_day = last_beta_day + 1
+    ensemble_df = pd.concat(
+        [
+            pd.DataFrame(
+                {
+                    "Day": [last_beta_day],
+                    "Mean": [last_beta_value],
+                    "Lower": [last_beta_value],
+                    "Upper": [last_beta_value],
+                }
+            ),
+            ensemble_df,
+        ],
+        ignore_index=True,
+    )
+
+    # Plotting
+    plt.figure(figsize=(10, 5))
+    sns.lineplot(
+        x="Day", y="Beta", data=beta_df, label="PMCMC Beta Estimation", color="blue"
+    )
+    sns.lineplot(
+        x="Day",
+        y="Mean",
+        data=ensemble_df,
+        label="Ensemble Mean Forecast",
+        color="orange",
+    )
+    plt.fill_between(
+        ensemble_df["Day"],
+        ensemble_df["Lower"],
+        ensemble_df["Upper"],
+        color="gray",
+        alpha=0.3,
+        label="95% Prediction Interval",
+    )
+
+    # Add vertical dotted line at the prediction date
+    prediction_day = beta_df["Day"].max()
+    plt.axvline(
+        x=prediction_day,
+        color="black",
+        linestyle="--",
+        label=f"Prediction Start: {date_str}",
+    )
+
+    plt.title(f"Beta Ensemble Forecast for Loc {loc_str}: {date_str}")
+    plt.xlabel("Day")
+    plt.ylabel("Beta Value")
+    plt.legend()
+
+    if streamlit:
+        st.pyplot(plt)  # For rendering in Streamlit
+    else:
+        plt.show()  
