@@ -14,7 +14,7 @@ from src.trend_forecast import main as trend_forecast
 
 def single_location_pipeline(loc_code: str, target_date: str) -> None:
     """
-    Forecast a single location.
+    Forecast pipeline for a single location.
 
     Args:
         loc_code: 2-digit string. See datasets/locations.csv
@@ -29,5 +29,7 @@ def single_location_pipeline(loc_code: str, target_date: str) -> None:
     hosp_forecast.main(forecasted_betas, loc_code, target_date)
 
 
-def main():
-    raise NotImplementedError("This method has not yet been implemented.")
+if __name__ == '__main__':
+    loc_code = sys.argv[1]
+    date = sys.argv[2]
+    single_location_pipeline(loc_code=loc_code, target_date=date)

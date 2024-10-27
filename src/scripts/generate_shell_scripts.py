@@ -44,7 +44,7 @@ DATE="{date}"
 
 echo "Starting forecast for location: $LOCATION. Forecast date: $DATE"
 
-python3 -m src.
+python3 -m src.scripts.flusight_forcecast $LOCATION $DATE
 """
 
 # Generate a SLURM script for each row in the CSV
