@@ -11,13 +11,13 @@ initial_theta = [{'beta_mu' = 0.05},
                  {'beta_mu' = 0.1},
                  {'beta_mu' = 0.15}]
 
-unif_prior = [0.01, 0.3]
+unif_prior = [0.03, 0.25]
 
 # file_label is appended to output file names
 file_label = "beta_mu_test"
 
 [filter_params]
-num_particles = 200
+num_particles = 150
 dt = 1.0
 seed_size = 0.03
 dispersion = 30
@@ -36,7 +36,7 @@ D = {value = 10, is_fixed = true}
 dW_volatility = {value = 0.01, is_fixed = true}
 
 # Params for the beta OU process
-beta_theta = {value = 0.5, is_fixed = true}
+beta_theta = {value = 1, is_fixed = true}
 beta_mu = {value = 0.15, is_fixed = true}
 beta_sigma = {value=0.01, is_fixed = true}
 
