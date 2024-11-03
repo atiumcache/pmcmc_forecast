@@ -9,6 +9,7 @@ from typing import Tuple
 
 import pandas as pd
 import requests
+from numpy import ndarray
 from pandas import Series
 from pytrends.request import TrendReq
 
@@ -212,10 +213,33 @@ def convert_loc_code_to_abbrev(loc_code: str) -> str:
     """
     locations_csv_path = path.join(paths.DATASETS_DIR, "locations.csv")
     locations_df = pd.read_csv(locations_csv_path)
-    loc_abbrev = locations_df.loc[
-        locations_df["location"] == loc_code, "abbreviation"
-    ].values[0]
-    return loc_abbrev
+
+    # Use bitwise OR (|) for multiple conditions and .astype(str) to match types
+    matching_rows = locations_df.loc[
+        (locations_df["location"] == loc_code)
+        | (locations_df["location"] == int(loc_code)),
+        "abbreviation",
+    ]
+
+    if matching_rows.empty:
+        raise ValueError(f"Location code '{loc_code}' not found in locations.csv")
+
+    return matching_rows.values[0]
+
+
+def get_flusight_google_search(
+    loc_code: str, search_term: str, target_date: str, start_date: str
+) -> ndarray:
+    """
+    A special case of get_google_search() for FluSight 2024. We want to
+    be able to indicate a start_date for the time series,
+    rather than pass in a series length.
+
+    Returns a numpy array time series, from start_date to target_date.
+    """
+    length = (pd.to_datetime(target_date) - pd.to_datetime(start_date)).days
+    df = get_google_search(loc_code, search_term, target_date, length)
+    return df.to_numpy().ravel()
 
 
 def get_google_search(
@@ -242,12 +266,17 @@ def get_google_search(
         target_date=target_date, series_length=series_length, lag=3
     )
 
+    # Set Google geo code. Puerto Rico does not have US prefix.
+    geo_code = f"US-{loc_abbrev}"
+    if loc_code in [72, "72"]:
+        geo_code = "PR"
+
     kw_list = [search_term]
     pytrends.build_payload(
         kw_list,
         cat=0,
         timeframe=f"{start_date} {end_date}",
-        geo=f"US-{loc_abbrev}",
+        geo=geo_code,
         gprop="",
     )
 

@@ -28,6 +28,7 @@ selected_state = st.selectbox("Select a State", list(state_to_loc.keys()))
 
 # Get corresponding loc_code
 loc_code = state_to_loc[selected_state]
+loc_code = str(loc_code).zfill(2)
 
 # Call the function with loc_code and user input
 prediction_date = st.selectbox("Select Forecast Date", list(dates))
@@ -43,9 +44,7 @@ if st.button("Plot Hospitalizations"):
             daily_resolution=False,
         )
     except FileNotFoundError:
-        st.write(
-            "File not found. This forecast has probably not been run yet. Try another location/date."
-        )
+        st.write("File not found. This forecast date may not have been run yet.")
 
 
 # Time series section

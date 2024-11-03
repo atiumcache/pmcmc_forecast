@@ -4,6 +4,7 @@ algorithm for the 2024 FluSight forecasting challenge.
 
 The pipeline is run once for each location.
 """
+
 import sys
 from jax import Array
 
@@ -29,7 +30,7 @@ def single_location_pipeline(loc_code: str, target_date: str) -> None:
     hosp_forecast.main(forecasted_betas, loc_code, target_date)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     loc_code = sys.argv[1]
     date = sys.argv[2]
     single_location_pipeline(loc_code=loc_code, target_date=date)

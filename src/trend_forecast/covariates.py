@@ -57,7 +57,6 @@ def get_covariate_data(
             loc_code, "flu symptoms", target_date, series_length
         ).to_numpy()
         data["google_search"] = data["google_search"].ravel()
-        print(data["google_search"].shape)
     if covariates.movement:
         data["movement"] = get_movement_data(loc_code, target_date, series_length)
 

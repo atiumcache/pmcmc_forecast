@@ -75,8 +75,9 @@ class ParticleCloud:
         """
         Sets the initial states of the particles,
         according to priors given in `config.toml`.
-        Modifies the instance variables in place.
-        Takes no args. Returns None.
+
+        Returns:
+            An array of initial states.
         """
         self.key, *initial_state_keys = random.split(
             self.key, self.settings.num_particles + 1

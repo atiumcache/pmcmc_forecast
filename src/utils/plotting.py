@@ -114,6 +114,7 @@ def plot_predictions_with_quantile_range(
             pf_uncertainty=pf_uncertainty,
             streamlit=streamlit,
         )
+        return
 
     # File paths
     pred_path = os.path.join(

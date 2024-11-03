@@ -238,7 +238,7 @@ class DataReader:
         # Read in predicted betas from Trend Forecasting
         predicted_beta_path = os.path.join(
             paths.OUTPUT_DIR,
-            "trend_forecast_20241021",
+            "trend_forecast_20241023",
             self.ref_date,
             self.loc_code,
             "b_t_fct_boot.csv",
