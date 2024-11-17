@@ -2,7 +2,7 @@
 
 [mcmc]
 iterations = 5000
-burn_in = 500
+burn_in = 500  # not currently used for anything
 # initial_theta overrides other parameters.
 # if a parameter is set here, then it will
 # be estimated by MCMC. The value set here
