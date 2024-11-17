@@ -4,37 +4,21 @@ model, and we infer the transmission rate using PMCMC.
 
 This repository implements an automated pipeline to:
 - Collect new hospitalization data.
-- Run the hospitalization data through a particle filter to estimate the transmission rate.
+- Run the hospitalization data through a PMCMC algorithm to estimate the transmission rate.
 - Forecast future transmission rates. 
 - Use the forecasted transmission rates to predict future hospitalizations. 
 
-We utilize a bash script (`./job_script.sh`) to automate and parallelize 
+We utilize bash scripts to automate and parallelize 
 most of this process on an HPC cluster. 
 
-### Collect New Hospitalization Data
-Download the new hospitalization reports and split the data into 
-state-level data using the `src/process_new_data.py` script.
+## Implementation Details
+See `/notebooks/usage_example_20241116.ipynb` for a detailed look at various components of the forecast pipeline. 
 
-### Run the Particle Filter
-For each location, we run the particle filter on the state-level data. This outputs an inferred transmission rate `β`. 
-The particle filter is implemented in the `src.particle_filter` package. 
-
-### Forecasting
-The `./r_scripts/beta_trend_forecast.R` script uses changepoint detection and 
-trend forecasting to predict the transmission rate `β` for 28 days into the future.
-
-Then, `filter_forecast.hosp_forecast` uses the predicted `β` to forecast hospitalization rates 28 days into the future.
-
-### Determine Accuracy
-Use Weighted Interval Scores (WIS) to determine the accuracy of our forecasts. This is performed in the [Flu Forecast Accuracy repository](https://github.com/atiumcache/flu-forecast-accuracy). We also compare this method with 
-MCMC forecasting.
+## Determine Accuracy
+Use Weighted Interval Scores (WIS) to determine the accuracy of our forecasts. This is performed in the [Flu Forecast Accuracy repository](https://github.com/atiumcache/flu-forecast-accuracy). We also compare this method with MCMC forecasting.
 
 More information on WIS can be found here:
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7880475/
-
-## Implementation Details
-See `./forecast_all_states.py` for the logic that runs the full pipeline on the 
-HPC cluster. This script is called from the `./job_script.sh` shell script.
 
 ## Particle Filter Credits
 Particle filter code derived from:   
